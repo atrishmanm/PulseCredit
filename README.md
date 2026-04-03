@@ -247,7 +247,9 @@ This application is intended for **informational and lifestyle tracking purposes
 
 # 👨‍💻 Contributors
 
-* Your Team Name / Members
+* ViteCredit
+  - SupratikDey
+  - atrishmanm
 
 ---
 
