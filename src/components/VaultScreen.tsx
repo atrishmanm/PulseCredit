@@ -124,8 +124,10 @@ export function VaultScreen() {
 
   const deleteRecord = async (id: string) => {
     try {
-      await deletePrescription(id);
-      await loadPrescriptions();
+      if (user?.uid) {
+        await deletePrescription(id, user.uid);
+        await loadPrescriptions();
+      }
     } catch (err) {
       console.error('Error deleting prescription:', err);
     }

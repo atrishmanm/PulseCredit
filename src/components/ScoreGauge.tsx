@@ -1,128 +1,173 @@
-import { Activity } from 'lucide-react';
-import { cn } from '@/src/lib/utils';
+import { motion } from 'motion/react';
 
 interface ScoreGaugeProps {
   score: number;
   maxScore?: number;
-  size?: 'sm' | 'md' | 'lg';
-  showLabel?: boolean;
 }
 
-export function ScoreGauge({ score, maxScore = 100, size = 'md', showLabel = true }: ScoreGaugeProps) {
-  const percentage = (score / maxScore) * 100;
+export function ScoreGauge({ score, maxScore = 1000 }: ScoreGaugeProps) {
+  const percentage = Math.min(100, Math.max(0, (score / maxScore) * 100));
 
-  // Determine color and label based on score
   const getScoreInfo = () => {
-    if (percentage < 20) return { label: 'Poor', color: '#DC2626', bgColor: 'bg-red-500' };
-    if (percentage < 40) return { label: 'Fair', color: '#F97316', bgColor: 'bg-orange-500' };
-    if (percentage < 60) return { label: 'Good', color: '#FBBF24', bgColor: 'bg-yellow-500' };
-    if (percentage < 80) return { label: 'Very Good', color: '#84CC16', bgColor: 'bg-lime-500' };
-    return { label: 'Excellent', color: '#22C55E', bgColor: 'bg-green-500' };
+    if (score < 300) return { label: 'Poor', color: '#ef4444', range: '0-299' };
+    if (score < 500) return { label: 'Fair', color: '#f97316', range: '300-499' };
+    if (score < 700) return { label: 'Good', color: '#eab308', range: '500-699' };
+    if (score < 850) return { label: 'Very Good', color: '#84cc16', range: '700-849' };
+    return { label: 'Excellent', color: '#22c55e', range: '850-1000' };
   };
 
   const scoreInfo = getScoreInfo();
-
-  const sizeMap = {
-    sm: { outer: 'w-24 h-24', inner: 'w-20 h-20', text: 'text-xl', labelSize: 'text-xs' },
-    md: { outer: 'w-40 h-40', inner: 'w-36 h-36', text: 'text-4xl', labelSize: 'text-sm' },
-    lg: { outer: 'w-56 h-56', inner: 'w-52 h-52', text: 'text-5xl', labelSize: 'text-base' },
-  };
-
-  const sizes = sizeMap[size];
-  const radius = size === 'sm' ? 40 : size === 'md' ? 70 : 100;
+  const radius = 80;
   const circumference = Math.PI * radius;
-  const offset = circumference - (percentage / 100) * circumference;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      {/* SVG Gauge */}
-      <div className={cn(sizes.outer, 'relative flex items-center justify-center')}>
-        {/* Background Circle */}
-        <svg className="absolute w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
-          <circle
-            cx="50%"
-            cy="50%"
-            r={radius}
+    <motion.div
+      className="flex flex-col items-center justify-center py-6 px-4 w-full"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      {/* Semi-circle gauge */}
+      <div className="relative w-full flex justify-center mb-8">
+        <svg width="260" height="150" viewBox="0 0 260 150" className="drop-shadow-lg">
+          {/* Background track */}
+          <path
+            d="M 20 130 A 90 90 0 0 1 240 130"
             fill="none"
-            stroke="currentColor"
-            strokeWidth="8"
-            className="text-surface-container-highest"
+            stroke="rgba(255, 255, 255, 0.1)"
+            strokeWidth="14"
+            strokeLinecap="round"
           />
-          {/* Progress Arc */}
-          <circle
-            cx="50%"
-            cy="50%"
-            r={radius}
+
+          {/* Color zones background */}
+          <path
+            d="M 20 130 A 90 90 0 0 1 70 35"
+            fill="none"
+            stroke="#ef4444"
+            strokeWidth="14"
+            strokeLinecap="round"
+            opacity="0.2"
+          />
+          <path
+            d="M 70 35 A 90 90 0 0 1 130 10"
+            fill="none"
+            stroke="#f97316"
+            strokeWidth="14"
+            strokeLinecap="round"
+            opacity="0.2"
+          />
+          <path
+            d="M 130 10 A 90 90 0 0 1 190 35"
+            fill="none"
+            stroke="#eab308"
+            strokeWidth="14"
+            strokeLinecap="round"
+            opacity="0.2"
+          />
+          <path
+            d="M 190 35 A 90 90 0 0 1 240 130"
+            fill="none"
+            stroke="#22c55e"
+            strokeWidth="14"
+            strokeLinecap="round"
+            opacity="0.2"
+          />
+
+          {/* Progress bar */}
+          <motion.path
+            d="M 20 130 A 90 90 0 0 1 240 130"
             fill="none"
             stroke={scoreInfo.color}
-            strokeWidth="8"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
+            strokeWidth="14"
             strokeLinecap="round"
-            className="transition-all duration-500 ease-out"
+            strokeDasharray={circumference}
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset }}
+            transition={{ duration: 1.2, ease: 'easeOut' }}
             style={{
-              filter: `drop-shadow(0 0 8px ${scoreInfo.color}30)`,
+              filter: `drop-shadow(0 0 12px ${scoreInfo.color}60)`,
             }}
           />
+
+          {/* Pointer indicator */}
+          <motion.g
+            initial={{ rotate: 0 }}
+            animate={{ rotate: (percentage / 100) * 180 }}
+            transition={{ duration: 1.2, ease: 'easeOut' }}
+            style={{ transformOrigin: '130px 130px' }}
+          >
+            <circle cx="130" cy="130" r="7" fill={scoreInfo.color} style={{ filter: `drop-shadow(0 0 6px ${scoreInfo.color})` }} />
+            <line x1="130" y1="130" x2="130" y2="25" stroke={scoreInfo.color} strokeWidth="3" strokeLinecap="round" />
+          </motion.g>
+
+          {/* Center circle */}
+          <circle cx="130" cy="130" r="10" fill="rgba(255, 255, 255, 0.15)" stroke="rgba(255, 255, 255, 0.4)" strokeWidth="2" />
+
+          {/* Score labels */}
+          <text x="25" y="145" fontSize="10" fill="rgba(255, 255, 255, 0.4)" fontWeight="500">300</text>
+          <text x="125" y="15" fontSize="10" fill="rgba(255, 255, 255, 0.4)" fontWeight="500" textAnchor="middle">700</text>
+          <text x="235" y="145" fontSize="10" fill="rgba(255, 255, 255, 0.4)" fontWeight="500" textAnchor="end">1000</text>
         </svg>
-
-        {/* Center Content */}
-        <div className="absolute flex flex-col items-center">
-          <div className={cn(sizes.text, 'font-black font-headline text-on-surface')} style={{ color: scoreInfo.color }}>
-            {Math.round(score)}
-          </div>
-          {showLabel && (
-            <div className={cn(sizes.labelSize, 'font-bold text-on-surface-variant uppercase tracking-widest')}>
-              {scoreInfo.label}
-            </div>
-          )}
-        </div>
-
-        {/* Animated Icon Background */}
-        <div
-          className={cn(sizes.inner, 'absolute rounded-full opacity-10 blur-xl pointer-events-none')}
-          style={{ backgroundColor: scoreInfo.color }}
-        />
       </div>
 
-      {/* Score Range Legend */}
-      {size !== 'sm' && (
-        <div className="w-full max-w-xs space-y-3">
-          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest text-center">Score Scale</p>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500" />
-                <span className="text-on-surface-variant">Poor: 0-20</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-orange-500" />
-                <span className="text-on-surface-variant">Fair: 20-40</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                <span className="text-on-surface-variant">Good: 40-60</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-lime-500" />
-                <span className="text-on-surface-variant">Very Good: 60-80</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-500" />
-                <span className="text-on-surface-variant">Excellent: 80-100</span>
-              </div>
-            </div>
+      {/* Score display */}
+      <div className="text-center space-y-3 mb-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <p className="text-6xl font-black font-headline" style={{ color: scoreInfo.color }}>
+            {Math.round(score)}
+          </p>
+          <p className="text-sm text-white/50 font-medium">out of {maxScore}</p>
+        </motion.div>
+
+        {/* Label badge */}
+        <motion.div
+          className="inline-block"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <span
+            className="px-5 py-2 rounded-full text-sm font-bold"
+            style={{
+              backgroundColor: `${scoreInfo.color}15`,
+              border: `2px solid ${scoreInfo.color}`,
+              color: scoreInfo.color,
+            }}
+          >
+            {scoreInfo.label}
+          </span>
+        </motion.div>
+      </div>
+
+      {/* Legend */}
+      <motion.div
+        className="w-full grid grid-cols-5 gap-2 pt-4 border-t border-white/10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
+        {[
+          { label: 'Poor', color: '#ef4444', range: '0-299' },
+          { label: 'Fair', color: '#f97316', range: '300-499' },
+          { label: 'Good', color: '#eab308', range: '500-699' },
+          { label: 'V.Good', color: '#84cc16', range: '700-849' },
+          { label: 'Excellent', color: '#22c55e', range: '850-1000' },
+        ].map((item) => (
+          <div key={item.label} className="text-center">
+            <div
+              className="w-2.5 h-2.5 rounded-full mx-auto mb-1.5"
+              style={{ backgroundColor: item.color }}
+            />
+            <p className="text-xs text-white/70 font-medium">{item.label}</p>
+            <p className="text-xs text-white/40 leading-tight">{item.range}</p>
           </div>
-        </div>
-      )}
-    </div>
+        ))}
+      </motion.div>
+    </motion.div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Camera, Upload, Check, X, Plus, Trash2, Leaf, Zap, AlertCircle, Loader2 } from 'lucide-react';
+import { Camera, Upload, Check, X, Plus, Trash2, Leaf, Zap, AlertCircle, Loader2, ChefHat } from 'lucide-react';
 import { recognizeFoodFromImage, FoodData } from '../lib/foodRecognition';
 import { addFoodLog } from '../lib/dataService';
 import { useAuth } from '../context/AuthContext';
@@ -21,6 +21,7 @@ export function FoodScannerScreen({ onSave, mealType = 'lunch' }: FoodScannerScr
   const [useCamera, setUseCamera] = useState(false);
   const [manualEntry, setManualEntry] = useState<Partial<FoodData>>({});
   const [selectedMealType, setSelectedMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>(mealType);
+  const [activeTab, setActiveTab] = useState<'scan' | 'manual'>('scan');
 
   async function handleImageUpload(file: File) {
     if (!file.type.startsWith('image/')) {
@@ -122,14 +123,49 @@ export function FoodScannerScreen({ onSave, mealType = 'lunch' }: FoodScannerScr
   };
 
   return (
-    <div className="space-y-12 pb-32">
+    <div className="space-y-8 pb-32">
       {/* Header */}
-      <header className="space-y-4">
+      <header className="space-y-6">
         <div className="space-y-2">
           <p className="font-headline uppercase text-xs font-bold tracking-widest text-primary">Nutrition Tracker</p>
-          <h1 className="text-4xl md:text-5xl font-black font-headline tracking-tighter">Food Scanner</h1>
+          <h1 className="text-4xl md:text-5xl font-black font-headline tracking-tighter flex items-center gap-3">
+            <ChefHat className="w-10 h-10 text-secondary" />
+            Food Scanner
+          </h1>
         </div>
-        <p className="text-on-surface-variant max-w-2xl">Scan your meal, log your food, and track your nutrition effortlessly</p>
+        <p className="text-on-surface-variant max-w-2xl">Scan your meal or enter manually to track your nutrition effortlessly</p>
+
+        {/* Tab Navigation */}
+        <div className="flex gap-2 bg-surface-container-high rounded-xl p-1 w-fit">
+          <button
+            onClick={() => setActiveTab('scan')}
+            className={cn(
+              "px-6 py-2 rounded-lg font-bold text-sm transition-all duration-300",
+              activeTab === 'scan'
+                ? "bg-gradient-to-r from-primary to-primary-container text-on-primary shadow-lg"
+                : "bg-transparent text-on-surface-variant hover:text-on-surface"
+            )}
+          >
+            <span className="flex items-center gap-2">
+              <Camera className="w-4 h-4" />
+              Scan Food
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab('manual')}
+            className={cn(
+              "px-6 py-2 rounded-lg font-bold text-sm transition-all duration-300",
+              activeTab === 'manual'
+                ? "bg-gradient-to-r from-secondary to-secondary-container text-on-secondary shadow-lg"
+                : "bg-transparent text-on-surface-variant hover:text-on-surface"
+            )}
+          >
+            <span className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Manual Entry
+            </span>
+          </button>
+        </div>
       </header>
 
       {/* Meal Type Selector */}
@@ -161,109 +197,108 @@ export function FoodScannerScreen({ onSave, mealType = 'lunch' }: FoodScannerScr
         </div>
       )}
 
-      {/* Upload Options */}
-      <div className="grid grid-cols-2 gap-4">
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={loading}
-          className="flex flex-col items-center gap-3 p-6 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-on-primary rounded-2xl font-semibold transition-all border border-primary/20 hover:border-primary/50"
-        >
-          <Upload className="w-6 h-6" />
-          <span className="text-xs md:text-sm">Upload Image</span>
-        </button>
-        <button
-          onClick={() => setUseCamera(!useCamera)}
-          className="flex flex-col items-center gap-3 p-6 bg-secondary hover:bg-secondary/90 text-on-secondary rounded-2xl font-semibold transition-all border border-secondary/20 hover:border-secondary/50"
-        >
-          <Camera className="w-6 h-6" />
-          <span className="text-xs md:text-sm">{useCamera ? 'Close' : 'Take Photo'}</span>
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
-          className="hidden"
-        />
+      {/* Tab Content: Scan */}
+      {activeTab === 'scan' && (
+        <div className="space-y-6">
+        {/* Upload Options */}
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={loading}
+            className="flex flex-col items-center gap-3 p-6 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-on-primary rounded-2xl font-semibold transition-all border border-primary/20 hover:border-primary/50"
+          >
+            <Upload className="w-6 h-6" />
+            <span className="text-xs md:text-sm">Upload Image</span>
+          </button>
+          <button
+            onClick={() => setUseCamera(!useCamera)}
+            className="flex flex-col items-center gap-3 p-6 bg-secondary hover:bg-secondary/90 text-on-secondary rounded-2xl font-semibold transition-all border border-secondary/20 hover:border-secondary/50"
+          >
+            <Camera className="w-6 h-6" />
+            <span className="text-xs md:text-sm">{useCamera ? 'Close' : 'Take Photo'}</span>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
+            className="hidden"
+          />
+        </div>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center p-12 bg-surface-container-high rounded-2xl border border-white/5">
+            <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
+            <p className="text-sm text-on-surface-variant font-medium">Analyzing your meal...</p>
+          </div>
+        )}
+
+        {/* Recognized Foods */}
+        {recognizedFoods.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 px-2">
+              <Zap className="w-5 h-5 text-secondary" />
+              <h2 className="text-xl font-bold font-headline">Recognized Foods</h2>
+              <span className="ml-auto text-xs font-bold text-on-surface-variant bg-surface-container px-3 py-1 rounded-full">{recognizedFoods.length} items</span>
+            </div>
+            <div className="space-y-3">
+              {recognizedFoods.map((food, index) => (
+                <div key={index} className="bg-surface-container-low rounded-xl p-5 border border-white/5 hover:border-primary/20 transition-colors space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-bold text-lg text-on-surface">{food.name}</h3>
+                      <p className="text-xs text-on-surface-variant mt-1">{food.serving_size}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-primary text-lg">{food.confidence}%</p>
+                      <p className="text-[10px] text-on-surface-variant uppercase">Confidence</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="bg-surface-container rounded-lg p-3">
+                      <p className="text-[10px] uppercase font-bold text-on-surface-variant mb-1">Calories</p>
+                      <p className="text-lg font-bold text-on-surface">{food.calories}</p>
+                    </div>
+                    <div className="bg-surface-container rounded-lg p-3">
+                      <p className="text-[10px] uppercase font-bold text-on-surface-variant mb-1">Protein</p>
+                      <p className="text-lg font-bold text-on-surface">{food.protein}g</p>
+                    </div>
+                    <div className="bg-surface-container rounded-lg p-3">
+                      <p className="text-[10px] uppercase font-bold text-on-surface-variant mb-1">Carbs</p>
+                      <p className="text-lg font-bold text-on-surface">{food.carbs}g</p>
+                    </div>
+                    <div className="bg-surface-container rounded-lg p-3">
+                      <p className="text-[10px] uppercase font-bold text-on-surface-variant mb-1">Fat</p>
+                      <p className="text-lg font-bold text-on-surface">{food.fat}g</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleSaveFood(food, index)}
+                      className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-primary-container hover:shadow-lg text-on-primary py-3 rounded-lg font-bold transition-all"
+                    >
+                      <Check className="w-4 h-4" />
+                      Add to Log
+                    </button>
+                    <button
+                      onClick={() => setRecognizedFoods(recognizedFoods.filter((_, i) => i !== index))}
+                      className="px-4 py-3 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg font-bold transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="flex flex-col items-center justify-center p-12 bg-surface-container-high rounded-2xl border border-white/5">
-          <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
-          <p className="text-sm text-on-surface-variant font-medium">Analyzing your meal...</p>
-        </div>
-      )}
-
-      {/* Recognized Foods */}
-      {recognizedFoods.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 px-2">
-            <Zap className="w-5 h-5 text-secondary" />
-            <h2 className="text-xl font-bold font-headline">Recognized Foods</h2>
-            <span className="ml-auto text-xs font-bold text-on-surface-variant bg-surface-container px-3 py-1 rounded-full">{recognizedFoods.length} items</span>
-          </div>
-          <div className="space-y-3">
-            {recognizedFoods.map((food, index) => (
-              <div key={index} className="bg-surface-container-low rounded-xl p-5 border border-white/5 hover:border-primary/20 transition-colors space-y-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg text-on-surface">{food.name}</h3>
-                    <p className="text-xs text-on-surface-variant mt-1">{food.serving_size}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-primary text-lg">{food.confidence}%</p>
-                    <p className="text-[10px] text-on-surface-variant uppercase">Confidence</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-4 gap-3">
-                  <div className="bg-surface-container rounded-lg p-3">
-                    <p className="text-[10px] uppercase font-bold text-on-surface-variant mb-1">Calories</p>
-                    <p className="text-lg font-bold text-on-surface">{food.calories}</p>
-                  </div>
-                  <div className="bg-surface-container rounded-lg p-3">
-                    <p className="text-[10px] uppercase font-bold text-on-surface-variant mb-1">Protein</p>
-                    <p className="text-lg font-bold text-on-surface">{food.protein}g</p>
-                  </div>
-                  <div className="bg-surface-container rounded-lg p-3">
-                    <p className="text-[10px] uppercase font-bold text-on-surface-variant mb-1">Carbs</p>
-                    <p className="text-lg font-bold text-on-surface">{food.carbs}g</p>
-                  </div>
-                  <div className="bg-surface-container rounded-lg p-3">
-                    <p className="text-[10px] uppercase font-bold text-on-surface-variant mb-1">Fat</p>
-                    <p className="text-lg font-bold text-on-surface">{food.fat}g</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleSaveFood(food, index)}
-                    className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-primary-container hover:shadow-lg text-on-primary py-3 rounded-lg font-bold transition-all"
-                  >
-                    <Check className="w-4 h-4" />
-                    Add to Log
-                  </button>
-                  <button
-                    onClick={() => setRecognizedFoods(recognizedFoods.filter((_, i) => i !== index))}
-                    className="px-4 py-3 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg font-bold transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Manual Entry Form */}
-      <div className="bg-surface-container-low rounded-2xl p-8 border border-white/5 space-y-6">
-        <div className="flex items-center gap-2">
-          <Plus className="w-5 h-5 text-secondary" />
-          <h2 className="text-xl font-bold font-headline">Manual Entry</h2>
-          <p className="text-xs text-on-surface-variant ml-auto">Can't find your food? Add it manually</p>
-        </div>
+      {/* Tab Content: Manual Entry */}
+      {activeTab === 'manual' && (
 
         <div className="space-y-4">
           <div className="space-y-2">
@@ -346,9 +381,9 @@ export function FoodScannerScreen({ onSave, mealType = 'lunch' }: FoodScannerScr
 
         <button
           onClick={handleManualEntry}
-          className="w-full bg-gradient-to-r from-secondary to-secondary-container hover:shadow-lg text-on-secondary py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2"
+          className="w-full bg-gradient-to-r from-secondary to-secondary-container hover:shadow-lg text-on-secondary py-4 rounded-lg font-bold transition-all flex items-center justify-center gap-2 text-lg"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-5 h-5" />
           Add Manual Entry
         </button>
       </div>

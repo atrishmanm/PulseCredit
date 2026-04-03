@@ -15,10 +15,6 @@ export function TopBar({}: TopBarProps) {
         <span className="font-headline uppercase tracking-widest text-xs font-bold text-primary">ViteCredit</span>
       </div>
       <div className="flex items-center gap-4">
-        <div className="text-right">
-          <p className="text-xs font-semibold text-on-surface">{user?.email}</p>
-          <p className="text-[10px] text-on-surface-variant capitalize">{user?.userData?.age || 'User'}</p>
-        </div>
         <button
           onClick={() => logout()}
           className="text-primary hover:bg-surface-container px-3 py-2 rounded-lg transition-colors active:scale-95 duration-200 flex items-center gap-2"

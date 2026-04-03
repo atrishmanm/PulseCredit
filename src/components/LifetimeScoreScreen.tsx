@@ -2,6 +2,7 @@ import { useHealth } from '@/src/context/HealthContext';
 import { GlassCard } from './GlassCard';
 import { TrendingUp, TrendingDown, Zap, Target, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { motion } from 'motion/react';
+import { ScoreGauge } from './ScoreGauge';
 import { calculateTrend, generateInsight, getWeeklySummary, calculatePercentile } from '@/src/lib/lifetimeScoring';
 
 export function LifetimeScoreScreen() {
@@ -11,11 +12,11 @@ export function LifetimeScoreScreen() {
   if (!trendData || trendData.length === 0) {
     return (
       <motion.div
-        className="flex items-center justify-center py-20"
+        className="flex flex-col items-center justify-center py-12"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-        <div className="text-center space-y-4 max-w-xs">
+        <div className="text-center space-y-4 max-w-xs pb-8">
           <div className="text-6xl">📊</div>
           <div>
             <p className="text-white font-headline text-xl font-bold">Start Your Health Journey</p>
@@ -25,6 +26,10 @@ export function LifetimeScoreScreen() {
             <p className="text-white/60 text-xs">Score initialized at</p>
             <p className="text-primary font-headline text-2xl font-bold">{lifetimeScore}</p>
           </div>
+        </div>
+        {/* Show gauge even in empty state */}
+        <div className="w-full relative rounded-2xl overflow-hidden bg-surface-container-low border border-white/5 p-4">
+          <ScoreGauge score={lifetimeScore} maxScore={1000} />
         </div>
       </motion.div>
     );
@@ -61,6 +66,11 @@ export function LifetimeScoreScreen() {
       initial="hidden"
       animate="visible"
     >
+      {/* CIBIL-Style Score Gauge */}
+      <motion.div variants={itemVariants} className="relative rounded-2xl overflow-hidden bg-surface-container-low border border-white/5">
+        <ScoreGauge score={lifetimeScore} maxScore={1000} />
+      </motion.div>
+
       {/* Header Score */}
       <motion.div variants={itemVariants} className="grid grid-cols-2 gap-3">
         {/* Main Score */}

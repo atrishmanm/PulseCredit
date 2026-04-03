@@ -93,7 +93,7 @@ export async function getPrescriptionsForUser(userId: string): Promise<Prescript
   }
 }
 
-export async function deletePrescription(prescriptionId: string): Promise<void> {
+export async function deletePrescription(prescriptionId: string, userId: string): Promise<void> {
   try {
     await deleteDoc(doc(db, 'prescriptions', prescriptionId));
   } catch (error) {
