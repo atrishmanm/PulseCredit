@@ -12,7 +12,7 @@ interface SettingsModalProps {
 
 export function SettingsModal({ isOpen, onClose, tab }: SettingsModalProps) {
   const { user: authUser } = useAuth();
-  const { user, updateUser } = useHealth();
+  const { user, updateUser, customTargets } = useHealth();
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -101,8 +101,8 @@ export function SettingsModal({ isOpen, onClose, tab }: SettingsModalProps) {
 
               <div className="bg-surface-container-high rounded-lg p-4 border border-primary/20">
                 <p className="text-xs font-bold text-primary mb-1">Account Status</p>
-                <p className="text-sm text-on-surface">Premium Account</p>
-                <p className="text-[10px] text-on-surface-variant mt-1">Active since {new Date().toLocaleDateString()}</p>
+                <p className="text-sm text-on-surface">Active</p>
+                <p className="text-[10px] text-on-surface-variant mt-1">Account created on {new Date().toLocaleDateString()}</p>
               </div>
 
               <button
@@ -117,51 +117,10 @@ export function SettingsModal({ isOpen, onClose, tab }: SettingsModalProps) {
           {/* Health Preferences */}
           {tab === 'health' && (
             <>
-              <div>
-                <label className="block text-xs uppercase font-bold text-on-surface-variant mb-3">
-                  Daily Step Goal
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {[5000, 7500, 10000].map(steps => (
-                    <button
-                      key={steps}
-                      className="py-3 bg-surface-container border-2 border-outline-variant/20 rounded-lg hover:border-secondary transition-colors"
-                    >
-                      <p className="font-bold text-on-surface">{steps.toLocaleString()}</p>
-                      <p className="text-[10px] text-on-surface-variant">steps</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs uppercase font-bold text-on-surface-variant mb-3">
-                  Dietary Preference
-                </label>
-                <div className="space-y-2">
-                  {['Omnivore', 'Vegetarian', 'Vegan', 'Keto'].map(diet => (
-                    <button
-                      key={diet}
-                      className="w-full py-3 text-left px-4 bg-surface-container border border-outline-variant/20 rounded-lg hover:bg-surface-container-high transition-colors"
-                    >
-                      {diet}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs uppercase font-bold text-on-surface-variant mb-3">
-                  Health Conditions
-                </label>
-                <div className="space-y-2">
-                  {['Vegetarian', 'Diabetic', 'Hypertension', 'None'].map(condition => (
-                    <label key={condition} className="flex items-center gap-3 p-3 bg-surface-container rounded-lg hover:bg-surface-container-high cursor-pointer transition-colors">
-                      <input type="checkbox" className="w-4 h-4 rounded" />
-                      <span className="text-sm">{condition}</span>
-                    </label>
-                  ))}
-                </div>
+              <div className="bg-surface-container-high rounded-lg p-4 border border-primary/20">
+                <p className="text-xs font-bold text-on-surface-variant mb-2">Current Health Profile</p>
+                <p className="text-lg font-bold text-on-surface">{user.disease || 'No condition set'}</p>
+                <p className="text-[10px] text-on-surface-variant mt-2">Set your health condition in the Personalized Health Profile section</p>
               </div>
             </>
           )}
@@ -171,27 +130,12 @@ export function SettingsModal({ isOpen, onClose, tab }: SettingsModalProps) {
             <>
               <div className="bg-surface-container-high rounded-lg p-4 border border-primary/20">
                 <p className="text-xs font-bold text-primary mb-2">🔒 Data Encryption</p>
-                <p className="text-sm text-on-surface">End-to-end encrypted</p>
-                <p className="text-[10px] text-on-surface-variant mt-1">Your health data is encrypted at rest and in transit</p>
-              </div>
-
-              <div>
-                <label className="flex items-center justify-between p-4 bg-surface-container border border-outline-variant/20 rounded-lg hover:bg-surface-container-high cursor-pointer transition-colors">
-                  <span className="text-sm font-medium">Share Data with Researchers</span>
-                  <input type="checkbox" className="w-5 h-5" />
-                </label>
-              </div>
-
-              <div>
-                <label className="flex items-center justify-between p-4 bg-surface-container border border-outline-variant/20 rounded-lg hover:bg-surface-container-high cursor-pointer transition-colors">
-                  <span className="text-sm font-medium">Anonymous Analytics</span>
-                  <input type="checkbox" defaultChecked className="w-5 h-5" />
-                </label>
+                <p className="text-sm text-on-surface">Your health data is encrypted</p>
               </div>
 
               <div className="bg-tertiary/10 border border-tertiary rounded-lg p-4">
                 <p className="text-xs font-bold text-tertiary mb-2">⚠️ Clear All Data</p>
-                <p className="text-sm text-on-surface mb-4">This will delete all your health records, prescriptions, and settings.</p>
+                <p className="text-sm text-on-surface mb-4">This will delete all your health records and settings.</p>
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
                   className="w-full py-3 bg-tertiary/20 text-tertiary font-bold rounded-lg hover:bg-tertiary/30 transition-colors flex items-center justify-center gap-2"
@@ -227,24 +171,9 @@ export function SettingsModal({ isOpen, onClose, tab }: SettingsModalProps) {
           {/* Notifications */}
           {tab === 'notifications' && (
             <>
-              <div>
-                <p className="text-xs font-bold text-on-surface-variant mb-4">NOTIFICATION TYPES</p>
-                <div className="space-y-3">
-                  {[
-                    { title: 'Medication Reminders', desc: 'Get notified about pill times' },
-                    { title: 'Health Goals', desc: 'Alerts when you reach milestones' },
-                    { title: 'Anomalies', desc: 'Unusual health patterns detected' },
-                    { title: 'Weekly Reports', desc: 'Summary of your health metrics' },
-                  ].map(notif => (
-                    <label key={notif.title} className="flex items-center justify-between p-4 bg-surface-container border border-outline-variant/20 rounded-lg hover:bg-surface-container-high cursor-pointer transition-colors">
-                      <div>
-                        <p className="text-sm font-medium">{notif.title}</p>
-                        <p className="text-xs text-on-surface-variant">{notif.desc}</p>
-                      </div>
-                      <input type="checkbox" defaultChecked className="w-5 h-5" />
-                    </label>
-                  ))}
-                </div>
+              <div className="bg-surface-container-high rounded-lg p-4 border border-primary/20">
+                <p className="text-xs font-bold text-primary mb-2">Notifications</p>
+                <p className="text-sm text-on-surface">Notification preferences can be managed through your system settings</p>
               </div>
             </>
           )}
@@ -254,21 +183,10 @@ export function SettingsModal({ isOpen, onClose, tab }: SettingsModalProps) {
             <>
               <div className="bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg p-6 border border-primary/30">
                 <p className="text-xs font-bold text-primary mb-1">CURRENT PLAN</p>
-                <h3 className="text-3xl font-black font-headline text-on-surface mb-1">Chronos Elite</h3>
-                <p className="text-sm text-on-surface-variant mb-4">Premium access to all features</p>
-                <div className="space-y-2">
-                  <p className="text-sm">✅ Unlimited health data storage</p>
-                  <p className="text-sm">✅ Advanced AI predictions</p>
-                  <p className="text-sm">✅ Priority support</p>
-                  <p className="text-sm">✅ Export health reports</p>
-                </div>
+                <h3 className="text-2xl font-black font-headline text-on-surface mb-1">Active</h3>
+                <p className="text-sm text-on-surface-variant mb-4">Your account is active and ready to use</p>
               </div>
 
-              <div className="bg-surface-container rounded-lg p-4 border border-outline-variant/20">
-                <p className="text-xs font-bold text-on-surface-variant mb-2">BILLING</p>
-                <p className="text-sm text-on-surface">$9.99 / month</p>
-                <p className="text-xs text-on-surface-variant mt-2">Next billing date: {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
-              </div>
 
               <button className="w-full py-3 bg-surface-container text-on-surface font-bold rounded-lg hover:bg-surface-container-high transition-colors">
                 Manage Subscription

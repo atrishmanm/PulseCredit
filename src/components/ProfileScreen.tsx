@@ -151,17 +151,10 @@ export function ProfileScreen({}: ProfileScreenProps) {
 
       {activeTab === 'overview' ? (
         <>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-surface-container p-6 rounded-xl border border-white/5">
-              <Activity className="w-6 h-6 text-primary mb-3" />
-              <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest">Vitality Score</p>
-              <p className="text-2xl font-black font-headline text-white">{scoreBreakdown.total}</p>
-            </div>
-            <div className="bg-surface-container p-6 rounded-xl border border-white/5">
-              <Shield className="w-6 h-6 text-secondary mb-3" />
-              <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest">Vault Status</p>
-              <p className="text-2xl font-black font-headline text-white">Secure</p>
-            </div>
+          <div className="bg-surface-container p-6 rounded-xl border border-white/5">
+            <Activity className="w-6 h-6 text-primary mb-3" />
+            <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest">Vitality Score</p>
+            <p className="text-2xl font-black font-headline text-white">{scoreBreakdown.total}</p>
           </div>
 
           <section className="space-y-4">
@@ -256,11 +249,6 @@ export function ProfileScreen({}: ProfileScreenProps) {
             <LogOut className="w-5 h-5" />
             Log Out
           </button>
-
-          <div className="text-center">
-            <p className="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold">Chronos v1.0.4-beta</p>
-            <p className="text-[9px] text-on-surface-variant/50 mt-1">End-to-end encrypted biological data</p>
-          </div>
 
           <ManualHealthUpdate isOpen={isManualUpdateOpen} onClose={() => setIsManualUpdateOpen(false)} />
           <SettingsModal isOpen={settingsModal !== null} onClose={() => setSettingsModal(null)} tab={settingsModal} />

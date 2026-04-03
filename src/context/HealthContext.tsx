@@ -11,7 +11,7 @@ import {
 } from '../lib/healthEngine';
 import { useAuth } from './AuthContext';
 import { getFoodLogsForDate, calculateDailyNutrition, saveHealthMetrics, loadHealthMetrics, loadCustomTargets } from '../lib/dataService';
-import { calculateLifetimeScore } from '../lib/lifetimeScoring';
+import { calculateLifetimeScore, calculateLevelFromScore } from '../lib/lifetimeScoring';
 import {
   getLifetimeScore,
   updateLifetimeScore as saveLifetimeScoreToFirebase,
@@ -130,7 +130,17 @@ export function HealthProvider({ children }: { children: ReactNode }) {
 
       // Load lifetime score from Firebase
       getLifetimeScore(authUser.uid)
-        .then(score => setLifetimeScore(score))
+        .then(score => {
+          setLifetimeScore(score);
+          // Calculate and set level/XP from loaded score
+          const { level, xp, maxXp } = calculateLevelFromScore(score);
+          setUser(prev => ({
+            ...prev,
+            level,
+            xp,
+            maxXp,
+          }));
+        })
         .catch(err => console.error('Error loading lifetime score:', err));
 
       // Load custom targets from Firebase
@@ -214,6 +224,16 @@ export function HealthProvider({ children }: { children: ReactNode }) {
     if (authUser && scoreBreakdown.total > 0) {
       const newLifetimeScore = calculateLifetimeScore(lifetimeScore, scoreBreakdown.total);
       setLifetimeScore(newLifetimeScore);
+
+      // Calculate and update level/XP
+      const { level, xp, maxXp } = calculateLevelFromScore(newLifetimeScore);
+      setUser(prev => ({
+        ...prev,
+        level,
+        xp,
+        maxXp,
+      }));
+
       saveLifetimeScoreToFirebase(authUser.uid, newLifetimeScore)
         .catch(err => console.error('Error updating lifetime score:', err));
     }

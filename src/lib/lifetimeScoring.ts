@@ -30,6 +30,47 @@ export function calculateDailyAverage(scores: number[]): number {
 }
 
 /**
+ * Calculate level and current XP from lifetime score
+ * Levels scale exponentially: Level 1 = 0-100, Level 2 = 100-300, etc.
+ */
+export function calculateLevelFromScore(lifetimeScore: number): { level: number; xp: number; maxXp: number } {
+  const levels = [
+    { minScore: 0, maxScore: 100, xpNeeded: 100 },
+    { minScore: 100, maxScore: 300, xpNeeded: 200 },
+    { minScore: 300, maxScore: 600, xpNeeded: 300 },
+    { minScore: 600, maxScore: 900, xpNeeded: 400 },
+    { minScore: 900, maxScore: Infinity, xpNeeded: 500 },
+  ];
+
+  // Find current level
+  let currentLevel = 1;
+  let totalXpEarned = 0;
+  let levelStartScore = 0;
+
+  for (const level of levels) {
+    if (lifetimeScore >= level.minScore && lifetimeScore < level.maxScore) {
+      const scoreInLevel = lifetimeScore - level.minScore;
+      const xpProgress = (scoreInLevel / (level.maxScore - level.minScore)) * level.xpNeeded;
+      return {
+        level: currentLevel,
+        xp: Math.round(xpProgress),
+        maxXp: level.xpNeeded,
+      };
+    }
+    totalXpEarned += level.xpNeeded;
+    currentLevel++;
+    levelStartScore = level.maxScore;
+  }
+
+  // Beyond last level
+  return {
+    level: currentLevel,
+    xp: Math.round((lifetimeScore - levelStartScore) * 0.5),
+    maxXp: 500,
+  };
+}
+
+/**
  * Determine trend direction
  */
 export function calculateTrend(
