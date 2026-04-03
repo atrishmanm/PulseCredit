@@ -3,6 +3,7 @@ import { GlassCard } from './GlassCard';
 import { ManualHealthUpdate } from './ManualHealthUpdate';
 import { SettingsModal } from './SettingsModal';
 import { HealthDashboard } from './HealthDashboard';
+import { ScoreGauge } from './ScoreGauge';
 import { Settings, LogOut, ChevronRight, Shield, Bell, CreditCard, User, Heart, Activity, BarChart3, Plus, X, Loader, AlertCircle } from 'lucide-react';
 import { useHealth } from '../context/HealthContext';
 import { useAuth } from '../context/AuthContext';
@@ -102,9 +103,6 @@ export function ProfileScreen({}: ProfileScreenProps) {
         </div>
         <div>
           <h1 className="text-3xl font-black font-headline tracking-tight">{user.name}</h1>
-          <p className="text-on-surface-variant font-medium uppercase tracking-widest text-xs mt-1">
-            {user.email}
-          </p>
         </div>
         <div className="flex gap-4">
           <div className="bg-surface-container px-6 py-2 rounded-full border border-white/5">
@@ -145,9 +143,18 @@ export function ProfileScreen({}: ProfileScreenProps) {
 
       {activeTab === 'overview' ? (
         <>
+          {/* Score Gauge Card */}
+          <div className="bg-surface-container-low rounded-2xl p-8 flex flex-col items-center border border-white/5">
+            <div className="text-center mb-6 space-y-2">
+              <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest">Your Health Score</p>
+              <p className="text-sm text-on-surface-variant">Vitality and wellness metrics</p>
+            </div>
+            <ScoreGauge score={scoreBreakdown.total} maxScore={100} size="md" showLabel={true} />
+          </div>
+
           <div className="bg-surface-container p-6 rounded-xl border border-white/5">
             <Activity className="w-6 h-6 text-primary mb-3" />
-            <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest">Vitality Score</p>
+            <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest">Vitality Score Legacy</p>
             <p className="text-2xl font-black font-headline text-white">{scoreBreakdown.total}</p>
           </div>
 

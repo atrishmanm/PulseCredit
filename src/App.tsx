@@ -9,6 +9,7 @@ import { VaultScreen } from './components/VaultScreen';
 import { ProfileScreen } from './components/ProfileScreen';
 import { LifetimeScoreScreen } from './components/LifetimeScoreScreen';
 import { DiseaseSelector } from './components/DiseaseSelector';
+import { DesktopBlocker } from './components/DesktopBlocker';
 import { Screen } from './types';
 import { motion, AnimatePresence } from 'motion/react';
 import { HealthProvider } from './context/HealthContext';
@@ -114,40 +115,42 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-on-surface selection:bg-primary/30">
-      {/* Background Gradients */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]"></div>
-        <div className="absolute top-[20%] -right-[10%] w-[30%] h-[30%] bg-secondary/5 rounded-full blur-[100px]"></div>
-        <div className="absolute -bottom-[10%] left-[20%] w-[50%] h-[50%] bg-tertiary/5 rounded-full blur-[150px]"></div>
+    <DesktopBlocker>
+      <div className="min-h-screen bg-background text-on-surface selection:bg-primary/30">
+        {/* Background Gradients */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+          <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]"></div>
+          <div className="absolute top-[20%] -right-[10%] w-[30%] h-[30%] bg-secondary/5 rounded-full blur-[100px]"></div>
+          <div className="absolute -bottom-[10%] left-[20%] w-[50%] h-[50%] bg-tertiary/5 rounded-full blur-[150px]"></div>
+        </div>
+
+        <TopBar />
+
+        <DiseaseSelector />
+
+        <main className="relative z-10 pt-24 px-6 max-w-5xl mx-auto">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeScreen}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {renderScreen()}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+
+        <BottomNav activeScreen={activeScreen} onScreenChange={setActiveScreen} />
+
+        <NotificationPopup
+          notifications={notifications}
+          onDismiss={handleDismissNotification}
+          onViewAll={() => setActiveScreen('profile')}
+        />
       </div>
-
-      <TopBar />
-
-      <DiseaseSelector />
-
-      <main className="relative z-10 pt-24 px-6 max-w-5xl mx-auto">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeScreen}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          >
-            {renderScreen()}
-          </motion.div>
-        </AnimatePresence>
-      </main>
-
-      <BottomNav activeScreen={activeScreen} onScreenChange={setActiveScreen} />
-
-      <NotificationPopup
-        notifications={notifications}
-        onDismiss={handleDismissNotification}
-        onViewAll={() => setActiveScreen('profile')}
-      />
-    </div>
+    </DesktopBlocker>
   );
 }
 

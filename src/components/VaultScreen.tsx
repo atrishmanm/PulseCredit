@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { GlassCard } from './GlassCard';
-import { Search, Shield, Bell, Pill, Calendar, Droplets, ArrowRight, Eye, Stethoscope, Upload, Trash2, Loader2, AlertCircle } from 'lucide-react';
+import { Search, Shield, Bell, Pill, Calendar, Droplets, ArrowRight, Stethoscope, Upload, Trash2, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { performMedicalOCR, MedicalOCRResult } from '@/src/lib/geminiAI';
 import { addPrescription, getPrescriptionsForUser, deletePrescription, Prescription } from '@/src/lib/dataService';
@@ -106,7 +106,6 @@ export function VaultScreen() {
           diagnosis: result.extractedData.diagnosis,
           medications: result.extractedData.medications,
           date: result.extractedData.date || new Date().toISOString().split('T')[0],
-          fileUrl: URL.createObjectURL(file),
         };
 
         await addPrescription(user.uid, prescription);
@@ -251,12 +250,7 @@ export function VaultScreen() {
                         <p className="text-sm font-medium">{record.details.diagnosis}</p>
                       </div>
                       <div className="col-span-1 flex items-end">
-                        {record.fileUrl && (
-                          <a href={record.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-surface-container-highest px-4 py-2 rounded-lg text-xs font-bold hover:bg-surface-bright transition-colors">
-                            <Eye className="w-4 h-4" />
-                            VIEW
-                          </a>
-                        )}
+                        <span className="text-xs font-bold text-on-surface-variant">Document Stored</span>
                       </div>
                     </div>
                   </div>
@@ -274,16 +268,16 @@ export function VaultScreen() {
                 <Shield className="w-4 h-4 text-secondary fill-current" />
                 <span className="text-on-surface-variant font-label text-xs uppercase tracking-wider font-semibold">Security Protocol</span>
               </div>
-              <h2 className="font-headline text-3xl font-extrabold text-on-surface">Vault Integrity</h2>
+              <h2 className="font-headline text-3xl font-extrabold text-on-surface">Documents Saved</h2>
             </div>
             <div className="mt-8 flex items-end gap-4 relative z-10">
               <span className="text-6xl font-headline font-black text-secondary">
-                {prescriptions.length > 0 ? '95' : '0'}%
+                {prescriptions.length}
               </span>
               <div className="pb-2">
                 <span className="text-secondary font-medium flex items-center gap-1">
-                  <Shield className="w-3 h-3" />
-                  Synced
+                  <Pill className="w-3 h-3" />
+                  {prescriptions.length === 1 ? 'Prescription' : 'Prescriptions'}
                 </span>
               </div>
             </div>

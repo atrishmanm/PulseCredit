@@ -14,26 +14,26 @@
   --color-surface-bright: #222c41;
   --color-surface-dim: #080e1c;
   --color-surface-variant: #1d2539;
-  
+
   --color-on-surface: #e0e5f9;
   --color-on-surface-variant: #a5abbd;
-  
+
   --color-primary: #85adff;
   --color-primary-container: #6e9fff;
   --color-on-primary-container: #002150;
   --color-primary-dim: #699cff;
-  
+
   --color-secondary: #4ce082;
   --color-secondary-container: #006d36;
   --color-on-secondary-container: #e3ffe4;
-  
+
   --color-tertiary: #ffb599;
   --color-tertiary-container: #fd933d;
   --color-on-tertiary-container: #4c2300;
-  
+
   --color-error: #ff716c;
   --color-error-container: #9f0519;
-  
+
   --color-outline: #6f7587;
   --color-outline-variant: #424858;
 }
@@ -41,6 +41,10 @@
 @layer base {
   body {
     @apply bg-background text-on-surface font-sans antialiased;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 }
 
