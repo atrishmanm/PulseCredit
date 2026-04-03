@@ -17,6 +17,7 @@ export function ProfileScreen({}: ProfileScreenProps) {
   const { setUserDisease } = useAuth();
   const [isHealthConnectSyncing, setIsHealthConnectSyncing] = useState(false);
   const [isManualUpdateOpen, setIsManualUpdateOpen] = useState(false);
+  const [showDataViewer, setShowDataViewer] = useState(false);
   const [settingsModal, setSettingsModal] = useState<'personal' | 'health' | 'privacy' | 'notifications' | 'subscription' | null>(null);
   const [showDiseaseEditor, setShowDiseaseEditor] = useState(false);
   const [diseaseInput, setDiseaseInput] = useState('');
@@ -28,14 +29,7 @@ export function ProfileScreen({}: ProfileScreenProps) {
   const handleHealthConnectSync = async () => {
     setIsHealthConnectSyncing(true);
     try {
-      // Check if user has actual data from food logs
-      if (metrics.diet.calories > 0 || metrics.activity.dailySteps > 0) {
-        // Show existing real data
-        alert('✅ Already synced!\n\n📊 Your Current Data:\n• ' + metrics.activity.dailySteps.toLocaleString() + ' steps\n• ' + metrics.activity.exerciseMinutes + ' min exercise\n• ' + metrics.diet.calories + ' kcal\n• ' + metrics.sleep.averageHours + 'h sleep');
-      } else {
-        // No real data yet
-        alert('❌ No tracked data yet!\n\nTo sync:\n1. Go to Scanner → Upload food photo\n2. Go to Profile → UPDATE → Manually add data\n3. Or connect Google Health Connect (setup required)');
-      }
+      setShowDataViewer(true);
     } catch (error) {
       console.error('Sync error:', error);
     } finally {
@@ -252,6 +246,109 @@ export function ProfileScreen({}: ProfileScreenProps) {
 
           <ManualHealthUpdate isOpen={isManualUpdateOpen} onClose={() => setIsManualUpdateOpen(false)} />
           <SettingsModal isOpen={settingsModal !== null} onClose={() => setSettingsModal(null)} tab={settingsModal} />
+
+          {/* Data Viewer Modal */}
+          {showDataViewer && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-surface-container rounded-2xl max-w-md w-full p-8 space-y-6 border border-white/10 max-h-[90vh] overflow-y-auto">
+                {/* Close Button */}
+                <button
+                  onClick={() => setShowDataViewer(false)}
+                  className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {/* Header */}
+                <div className="text-center space-y-2">
+                  <Activity className="w-8 h-8 text-primary mx-auto" />
+                  <h2 className="font-headline text-2xl font-bold text-on-surface">
+                    Your Health Data
+                  </h2>
+                  <p className="text-xs text-on-surface-variant">Current tracked metrics</p>
+                </div>
+
+                {/* Data Grid */}
+                <div className="space-y-4">
+                  {/* Activity Section */}
+                  <div className="bg-surface-container-high rounded-xl p-4 border border-white/5 space-y-3">
+                    <p className="text-xs font-bold text-primary uppercase tracking-wider">🏃 Activity</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-surface-container rounded-lg p-3">
+                        <p className="text-[10px] text-on-surface-variant uppercase">Daily Steps</p>
+                        <p className="text-xl font-bold text-on-surface mt-1">{metrics.activity.dailySteps.toLocaleString()}</p>
+                      </div>
+                      <div className="bg-surface-container rounded-lg p-3">
+                        <p className="text-[10px] text-on-surface-variant uppercase">Exercise</p>
+                        <p className="text-xl font-bold text-on-surface mt-1">{metrics.activity.exerciseMinutes}m</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Nutrition Section */}
+                  <div className="bg-surface-container-high rounded-xl p-4 border border-white/5 space-y-3">
+                    <p className="text-xs font-bold text-secondary uppercase tracking-wider">🍽️ Nutrition</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-surface-container rounded-lg p-3">
+                        <p className="text-[10px] text-on-surface-variant uppercase">Calories</p>
+                        <p className="text-xl font-bold text-on-surface mt-1">{metrics.diet.calories.toLocaleString()}</p>
+                      </div>
+                      <div className="bg-surface-container rounded-lg p-3">
+                        <p className="text-[10px] text-on-surface-variant uppercase">Protein</p>
+                        <p className="text-xl font-bold text-on-surface mt-1">{metrics.diet.proteinGrams}g</p>
+                      </div>
+                      <div className="bg-surface-container rounded-lg p-3">
+                        <p className="text-[10px] text-on-surface-variant uppercase">Water</p>
+                        <p className="text-xl font-bold text-on-surface mt-1">{metrics.diet.waterLiters.toFixed(1)}L</p>
+                      </div>
+                      <div className="bg-surface-container rounded-lg p-3">
+                        <p className="text-[10px] text-on-surface-variant uppercase">Healthy %</p>
+                        <p className="text-xl font-bold text-on-surface mt-1">{metrics.diet.healthyMealsPercentage}%</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Rest Section */}
+                  <div className="bg-surface-container-high rounded-xl p-4 border border-white/5 space-y-3">
+                    <p className="text-xs font-bold text-tertiary uppercase tracking-wider">😴 Rest</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-surface-container rounded-lg p-3">
+                        <p className="text-[10px] text-on-surface-variant uppercase">Sleep Hours</p>
+                        <p className="text-xl font-bold text-on-surface mt-1">{metrics.sleep.averageHours.toFixed(1)}h</p>
+                      </div>
+                      <div className="bg-surface-container rounded-lg p-3">
+                        <p className="text-[10px] text-on-surface-variant uppercase">Quality</p>
+                        <p className="text-xl font-bold text-on-surface mt-1">{metrics.sleep.quality}%</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stress Section */}
+                  <div className="bg-surface-container-high rounded-xl p-4 border border-white/5 space-y-3">
+                    <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">🧘 Wellness</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-surface-container rounded-lg p-3">
+                        <p className="text-[10px] text-on-surface-variant uppercase">Stress Level</p>
+                        <p className="text-xl font-bold text-on-surface mt-1">{metrics.stress.level}/10</p>
+                      </div>
+                      <div className="bg-surface-container rounded-lg p-3">
+                        <p className="text-[10px] text-on-surface-variant uppercase">Meditation</p>
+                        <p className="text-xl font-bold text-on-surface mt-1">{metrics.stress.meditationMinutes}m</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Close Button */}
+                <button
+                  onClick={() => setShowDataViewer(false)}
+                  className="w-full py-3 bg-primary text-on-primary font-bold rounded-full hover:bg-primary/90 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Disease Editor Modal */}
           {showDiseaseEditor && (

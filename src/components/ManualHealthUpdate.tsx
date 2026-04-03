@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { X, Plus, Footprints, Dumbbell, Droplets, Moon, Utensils, Zap } from 'lucide-react';
+import { X, Plus, Footprints, Dumbbell, Droplets, Moon, Utensils, Zap, Check } from 'lucide-react';
 import { useHealth } from '../context/HealthContext';
+import { useAuth } from '../context/AuthContext';
+import { saveHealthMetrics } from '../lib/dataService';
 import { cn } from '@/src/lib/utils';
 
 interface ManualHealthUpdateProps {
@@ -10,6 +12,7 @@ interface ManualHealthUpdateProps {
 
 export function ManualHealthUpdate({ isOpen, onClose }: ManualHealthUpdateProps) {
   const { metrics, updateMetrics } = useHealth();
+  const { user: authUser } = useAuth();
   const [formData, setFormData] = useState({
     steps: metrics.activity.dailySteps,
     exercise: metrics.activity.exerciseMinutes,
@@ -20,6 +23,8 @@ export function ManualHealthUpdate({ isOpen, onClose }: ManualHealthUpdateProps)
   });
 
   const [activeTab, setActiveTab] = useState<'activity' | 'nutrition' | 'rest'>('activity');
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleSliderChange = (key: keyof typeof formData, value: number) => {
     setFormData(prev => ({
@@ -28,28 +33,55 @@ export function ManualHealthUpdate({ isOpen, onClose }: ManualHealthUpdateProps)
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    updateMetrics({
-      activity: {
-        ...metrics.activity,
-        dailySteps: formData.steps,
-        exerciseMinutes: formData.exercise,
-      },
-      diet: {
-        ...metrics.diet,
-        waterLiters: formData.water,
-        calories: formData.calories,
-        proteinGrams: formData.protein,
-      },
-      sleep: {
-        ...metrics.sleep,
-        averageHours: formData.sleep,
-      },
-    });
+    if (!authUser) {
+      alert('Please log in first');
+      return;
+    }
 
-    onClose();
+    setIsSaving(true);
+
+    try {
+      const newMetrics = {
+        activity: {
+          ...metrics.activity,
+          dailySteps: formData.steps,
+          exerciseMinutes: formData.exercise,
+        },
+        diet: {
+          ...metrics.diet,
+          waterLiters: formData.water,
+          calories: formData.calories,
+          proteinGrams: formData.protein,
+        },
+        sleep: {
+          ...metrics.sleep,
+          averageHours: formData.sleep,
+        },
+      };
+
+      // Update local state immediately
+      updateMetrics(newMetrics);
+
+      // Save immediately to Firebase (don't wait for debounce)
+      await saveHealthMetrics(authUser.uid, newMetrics);
+
+      // Show success state
+      setShowSuccess(true);
+
+      // Close after success feedback
+      setTimeout(() => {
+        onClose();
+        setShowSuccess(false);
+      }, 1500);
+    } catch (error) {
+      console.error('Error saving health metrics:', error);
+      alert('Error saving data. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -456,16 +488,37 @@ export function ManualHealthUpdate({ isOpen, onClose }: ManualHealthUpdateProps)
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-3 text-on-surface font-bold border border-outline-variant/20 rounded-full hover:bg-surface-container transition-colors"
+            disabled={isSaving}
+            className="flex-1 py-3 text-on-surface font-bold border border-outline-variant/20 rounded-full hover:bg-surface-container transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="flex-1 py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold rounded-full hover:shadow-lg hover:shadow-primary/20 transition-all shadow-md flex items-center justify-center gap-2 active:scale-95"
+            disabled={isSaving}
+            className={cn(
+              "flex-1 py-3 font-bold rounded-full transition-all flex items-center justify-center gap-2 shadow-md",
+              showSuccess
+                ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                : "bg-gradient-to-r from-primary to-primary-container text-on-primary hover:shadow-lg hover:shadow-primary/20 disabled:opacity-50"
+            )}
           >
-            <Plus className="w-4 h-4" />
-            Save & Update
+            {showSuccess ? (
+              <>
+                <Check className="w-4 h-4" />
+                Saved!
+              </>
+            ) : isSaving ? (
+              <>
+                <div className="w-4 h-4 border-2 border-on-primary border-t-transparent rounded-full animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4" />
+                Save & Update
+              </>
+            )}
           </button>
         </div>
       </div>
