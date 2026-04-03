@@ -153,22 +153,29 @@ export function LifetimeScoreScreen() {
         <GlassCard className="bg-gradient-to-br from-white/5 to-transparent border-white/10">
           <p className="text-white/60 text-xs font-medium mb-4">30-Day History</p>
           <div className="space-y-2">
-            {trendData.map((data, idx) => (
-              <div key={idx} className="flex items-center justify-between text-xs">
-                <span className="text-white/40 w-12">{data.date}</span>
-                <div className="flex-1 ml-4">
-                  <div className="w-full bg-surface-container rounded-full h-1.5">
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(data.score / 1000) * 100}%` }}
-                      transition={{ duration: 0.6, delay: idx * 0.02 }}
-                    />
+            {trendData.map((data, idx) => {
+              const date = new Date(data.date);
+              const today = new Date();
+              const daysAgo = Math.floor((today.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+              const displayDate = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo}d ago`;
+
+              return (
+                <div key={idx} className="flex items-center justify-between text-xs">
+                  <span className="text-white/40 w-16">{displayDate}</span>
+                  <div className="flex-1 ml-4">
+                    <div className="w-full bg-surface-container rounded-full h-1.5">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(data.score / 1000) * 100}%` }}
+                        transition={{ duration: 0.6, delay: idx * 0.02 }}
+                      />
+                    </div>
                   </div>
+                  <span className="text-white/60 w-8 text-right">{data.score}</span>
                 </div>
-                <span className="text-white/60 w-8 text-right">{data.score}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </GlassCard>
       </motion.div>
