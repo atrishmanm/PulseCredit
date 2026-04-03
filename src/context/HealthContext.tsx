@@ -245,11 +245,11 @@ export function HealthProvider({ children }: { children: ReactNode }) {
 
   const updateMetrics = (updates: Partial<HealthMetrics>) => {
     setMetrics(prev => ({
-      sleep: { ...prev.sleep, ...updates.sleep },
-      activity: { ...prev.activity, ...updates.activity },
-      diet: { ...prev.diet, ...updates.diet },
-      stress: { ...prev.stress, ...updates.stress },
-      habits: { ...prev.habits, ...updates.habits },
+      sleep: updates.sleep ? { ...prev.sleep, ...updates.sleep } : prev.sleep,
+      activity: updates.activity ? { ...prev.activity, ...updates.activity } : prev.activity,
+      diet: updates.diet ? { ...prev.diet, ...updates.diet } : prev.diet,
+      stress: updates.stress ? { ...prev.stress, ...updates.stress } : prev.stress,
+      habits: updates.habits ? { ...prev.habits, ...updates.habits } : prev.habits,
     }));
   };
 

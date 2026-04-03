@@ -1,5 +1,6 @@
 import { useHealth } from '@/src/context/HealthContext';
 import { GlassCard } from './GlassCard';
+import { ScoreGauge } from './ScoreGauge';
 import { TrendingUp, TrendingDown, Zap, Target, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { motion } from 'motion/react';
 import { ScoreGauge } from './ScoreGauge';

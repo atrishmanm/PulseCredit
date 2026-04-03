@@ -339,6 +339,61 @@ async function fileToBase64(file: File): Promise<string> {
   });
 }
 
+/**
+ * Analyze manually entered food description using AI
+ */
+export async function analyzeManualFoodEntry(foodDescription: string, servingSize?: string): Promise<FoodAnalysisResult> {
+  console.log('🔍 Starting manual food analysis...', { foodDescription, servingSize });
+
+  if (!genAI) {
+    console.log('⚠️ No API key found, using mock data');
+    return getMockFoodAnalysis();
+  }
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+    const prompt = `Analyze this food description and provide a detailed nutritional breakdown. ${servingSize ? `Serving size: ${servingSize}` : ''}
+
+Food description: "${foodDescription}"
+
+Return ONLY a JSON object with this exact structure (no markdown, no code blocks):
+{
+  "foodName": "name of the dish",
+  "calories": estimated calories (number),
+  "protein": grams of protein (number),
+  "carbs": grams of carbohydrates (number),
+  "fat": grams of fat (number),
+  "fiber": grams of fiber (number),
+  "healthScore": score from -10 (very unhealthy) to +10 (very healthy),
+  "healthImpact": "brief explanation of health impact",
+  "nutrients": [
+    {"name": "vitamin/mineral name", "amount": "amount with unit", "dailyValue": percentage as number}
+  ],
+  "suggestions": ["suggestion 1", "suggestion 2"]
+}`;
+
+    console.log('📤 Sending manual food analysis request to Gemini...');
+    const result = await model.generateContent(prompt);
+
+    const responseText = result.response.text();
+    console.log('📥 Received response from Gemini');
+
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.warn('Failed to parse JSON from response');
+      return getMockFoodAnalysis();
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]) as FoodAnalysisResult;
+    console.log('✅ Manual food analysis complete:', { foodName: parsed.foodName, calories: parsed.calories });
+    return parsed;
+  } catch (error) {
+    console.error('Error analyzing manual food entry:', error);
+    return getMockFoodAnalysis();
+  }
+}
+
 // Mock data fallbacks
 function getMockFoodAnalysis(): FoodAnalysisResult {
   return {

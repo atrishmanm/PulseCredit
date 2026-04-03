@@ -93,7 +93,11 @@ export async function getPrescriptionsForUser(userId: string): Promise<Prescript
   }
 }
 
+<<<<<<< HEAD
 export async function deletePrescription(prescriptionId: string, userId: string): Promise<void> {
+=======
+export async function deletePrescription(prescriptionId: string, userId?: string): Promise<void> {
+>>>>>>> eff9882 (added semi-circle map for Lifetime score)
   try {
     await deleteDoc(doc(db, 'prescriptions', prescriptionId));
   } catch (error) {
