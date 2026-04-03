@@ -1,0 +1,5 @@
+{
+  "name": "Chronos: The Living Chronometer",
+  "description": "A high-end, proactive health curator and digital twin that tracks your biological trajectory.",
+  "requestFramePermissions": ["camera"]
+}

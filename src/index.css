@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Inter:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-headline: "Manrope", sans-serif;
+
+  --color-background: #080e1c;
+  --color-surface: #0d1321;
+  --color-surface-container: #12192a;
+  --color-surface-container-low: #0c1322;
+  --color-surface-container-high: #171f32;
+  --color-surface-container-highest: #1d2539;
+  --color-surface-bright: #222c41;
+  --color-surface-dim: #080e1c;
+  --color-surface-variant: #1d2539;
+  
+  --color-on-surface: #e0e5f9;
+  --color-on-surface-variant: #a5abbd;
+  
+  --color-primary: #85adff;
+  --color-primary-container: #6e9fff;
+  --color-on-primary-container: #002150;
+  --color-primary-dim: #699cff;
+  
+  --color-secondary: #4ce082;
+  --color-secondary-container: #006d36;
+  --color-on-secondary-container: #e3ffe4;
+  
+  --color-tertiary: #ffb599;
+  --color-tertiary-container: #fd933d;
+  --color-on-tertiary-container: #4c2300;
+  
+  --color-error: #ff716c;
+  --color-error-container: #9f0519;
+  
+  --color-outline: #6f7587;
+  --color-outline-variant: #424858;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-surface font-sans antialiased;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-surface-container/60 backdrop-blur-3xl;
+  }
+  
+  .chrono-ring {
+    background: conic-gradient(from 0deg, var(--color-secondary) 84%, transparent 84%);
+    mask: radial-gradient(farthest-side, transparent calc(100% - 12px), black 0);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 12px), black 0);
+  }
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

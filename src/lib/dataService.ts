@@ -1,0 +1,185 @@
+import { db } from '../lib/firebase';
+import {
+  collection,
+  addDoc,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  Timestamp,
+  updateDoc,
+  doc,
+  deleteDoc,
+} from 'firebase/firestore';
+
+export interface FoodLog {
+  id?: string;
+  userId: string;
+  foodName: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+  servingSize: string;
+  imageUrl?: string;
+  manualEntry: boolean;
+  confirmedByUser: boolean;
+  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  timestamp: number;
+  createdAt: Timestamp;
+}
+
+export interface Prescription {
+  id?: string;
+  userId: string;
+  docturName: string;
+  diagnosis: string;
+  medications: {
+    name: string;
+    dosage: string;
+    frequency: string;
+  }[];
+  date: string;
+  fileUrl?: string;
+  uploadedAt: Timestamp;
+}
+
+export async function addFoodLog(userId: string, log: Omit<FoodLog, 'id' | 'createdAt'>): Promise<string> {
+  try {
+    const docRef = await addDoc(collection(db, 'foodLogs'), {
+      ...log,
+      createdAt: Timestamp.now(),
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding food log:', error);
+    throw error;
+  }
+}
+
+export async function addPrescription(userId: string, prescription: Omit<Prescription, 'id' | 'uploadedAt'>): Promise<string> {
+  try {
+    const docRef = await addDoc(collection(db, 'prescriptions'), {
+      ...prescription,
+      userId,
+      uploadedAt: Timestamp.now(),
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding prescription:', error);
+    throw error;
+  }
+}
+
+export async function getPrescriptionsForUser(userId: string): Promise<Prescription[]> {
+  try {
+    const q = query(
+      collection(db, 'prescriptions'),
+      where('userId', '==', userId)
+    );
+
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Prescription[];
+  } catch (error) {
+    console.error('Error fetching prescriptions:', error);
+    throw error;
+  }
+}
+
+export async function deletePrescription(prescriptionId: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, 'prescriptions', prescriptionId));
+  } catch (error) {
+    console.error('Error deleting prescription:', error);
+    throw error;
+  }
+}
+
+export async function getFoodLogsForDate(userId: string, date: Date): Promise<FoodLog[]> {
+  try {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Simple query - filter by userId only, do timestamp filtering in memory
+    const q = query(
+      collection(db, 'foodLogs'),
+      where('userId', '==', userId)
+    );
+
+    const snapshot = await getDocs(q);
+    const allLogs = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as FoodLog[];
+
+    // Filter by date in memory and sort
+    return allLogs
+      .filter(log => log.timestamp >= startOfDay.getTime() && log.timestamp <= endOfDay.getTime())
+      .sort((a, b) => b.timestamp - a.timestamp);
+  } catch (error) {
+    console.error('Error fetching food logs:', error);
+    throw error;
+  }
+}
+
+export async function getFoodLogsDateRange(userId: string, startDate: Date, endDate: Date): Promise<FoodLog[]> {
+  try {
+    // Simple query - filter by userId only, do date filtering in memory
+    const q = query(
+      collection(db, 'foodLogs'),
+      where('userId', '==', userId)
+    );
+
+    const snapshot = await getDocs(q);
+    const allLogs = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as FoodLog[];
+
+    // Filter by date range in memory and sort
+    return allLogs
+      .filter(log => log.timestamp >= startDate.getTime() && log.timestamp <= endDate.getTime())
+      .sort((a, b) => b.timestamp - a.timestamp);
+  } catch (error) {
+    console.error('Error fetching food logs for date range:', error);
+    throw error;
+  }
+}
+
+export async function updateFoodLog(logId: string, updates: Partial<FoodLog>): Promise<void> {
+  try {
+    const docRef = doc(db, 'foodLogs', logId);
+    await updateDoc(docRef, updates);
+  } catch (error) {
+    console.error('Error updating food log:', error);
+    throw error;
+  }
+}
+
+export async function deleteFoodLog(logId: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, 'foodLogs', logId));
+  } catch (error) {
+    console.error('Error deleting food log:', error);
+    throw error;
+  }
+}
+
+export function calculateDailyNutrition(logs: FoodLog[]) {
+  return {
+    totalCalories: logs.reduce((sum, log) => sum + log.calories, 0),
+    totalProtein: logs.reduce((sum, log) => sum + log.protein, 0),
+    totalCarbs: logs.reduce((sum, log) => sum + log.carbs, 0),
+    totalFat: logs.reduce((sum, log) => sum + log.fat, 0),
+    totalFiber: logs.reduce((sum, log) => sum + log.fiber, 0),
+    mealCount: logs.length,
+  };
+}
+
