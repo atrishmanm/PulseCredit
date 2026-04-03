@@ -9,10 +9,6 @@ import { VaultScreen } from './components/VaultScreen';
 import { ProfileScreen } from './components/ProfileScreen';
 import { LifetimeScoreScreen } from './components/LifetimeScoreScreen';
 import { DiseaseSelector } from './components/DiseaseSelector';
-import { HomeScreenPremium } from './components/HomeScreenPremium';
-import { ScannerScreenPremium } from './components/ScannerScreenPremium';
-import { EngineScreenPremium } from './components/EngineScreenPremium';
-import { VaultScreenPremium } from './components/VaultScreenPremium';
 import { Screen } from './types';
 import { motion, AnimatePresence } from 'motion/react';
 import { HealthProvider } from './context/HealthContext';
@@ -101,19 +97,19 @@ function AppContent() {
   const renderScreen = () => {
     switch (activeScreen) {
       case 'home':
-        return <HomeScreenPremium />;
+        return <HomeScreen />;
       case 'lifetime':
         return <LifetimeScoreScreen />;
       case 'engine':
-        return <EngineScreenPremium />;
+        return <EngineScreen />;
       case 'scanner':
-        return <ScannerScreenPremium />;
+        return <ScannerScreen />;
       case 'vault':
-        return <VaultScreenPremium />;
+        return <VaultScreen />;
       case 'profile':
         return <ProfileScreen />;
       default:
-        return <HomeScreenPremium />;
+        return <HomeScreen />;
     }
   };
 

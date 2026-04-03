@@ -49,17 +49,18 @@ export async function saveNotification(
 export async function getUnreadNotifications(userId: string): Promise<Notification[]> {
   const q = query(
     collection(db, NOTIFICATIONS_COLLECTION),
-    where('userId', '==', userId),
-    where('read', '==', false),
-    orderBy('timestamp', 'desc'),
-    limit(50)
+    where('userId', '==', userId)
   );
 
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...(doc.data() as Omit<Notification, 'id'>),
-  }));
+  return querySnapshot.docs
+    .map(doc => ({
+      id: doc.id,
+      ...(doc.data() as Omit<Notification, 'id'>),
+    }))
+    .filter(n => !n.read)
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 50);
 }
 
 /**
@@ -70,17 +71,18 @@ export async function getAllNotifications(userId: string): Promise<Notification[
 
   const q = query(
     collection(db, NOTIFICATIONS_COLLECTION),
-    where('userId', '==', userId),
-    where('timestamp', '>=', thirtyDaysAgo),
-    orderBy('timestamp', 'desc'),
-    limit(100)
+    where('userId', '==', userId)
   );
 
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...(doc.data() as Omit<Notification, 'id'>),
-  }));
+  return querySnapshot.docs
+    .map(doc => ({
+      id: doc.id,
+      ...(doc.data() as Omit<Notification, 'id'>),
+    }))
+    .filter(n => n.timestamp >= thirtyDaysAgo)
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 100);
 }
 
 /**
@@ -99,14 +101,13 @@ export async function markNotificationAsRead(notificationId: string): Promise<vo
 export async function markAllNotificationsAsRead(userId: string): Promise<void> {
   const q = query(
     collection(db, NOTIFICATIONS_COLLECTION),
-    where('userId', '==', userId),
-    where('read', '==', false)
+    where('userId', '==', userId)
   );
 
   const querySnapshot = await getDocs(q);
-  const updates = querySnapshot.docs.map(doc =>
-    updateDoc(doc.ref, { read: true })
-  );
+  const updates = querySnapshot.docs
+    .filter(doc => !doc.data().read)
+    .map(doc => updateDoc(doc.ref, { read: true }));
 
   await Promise.all(updates);
 }
@@ -126,12 +127,13 @@ export async function clearOldNotifications(userId: string): Promise<void> {
 
   const q = query(
     collection(db, NOTIFICATIONS_COLLECTION),
-    where('userId', '==', userId),
-    where('timestamp', '<', thirtyDaysAgo)
+    where('userId', '==', userId)
   );
 
   const querySnapshot = await getDocs(q);
-  const deletes = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+  const deletes = querySnapshot.docs
+    .filter(doc => doc.data().timestamp < thirtyDaysAgo)
+    .map(doc => deleteDoc(doc.ref));
 
   await Promise.all(deletes);
 }
