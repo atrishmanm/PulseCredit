@@ -10,7 +10,7 @@ import {
   simulateFutureRisks
 } from '../lib/healthEngine';
 import { useAuth } from './AuthContext';
-import { getFoodLogsForDate, calculateDailyNutrition, saveHealthMetrics, loadHealthMetrics } from '../lib/dataService';
+import { getFoodLogsForDate, calculateDailyNutrition, saveHealthMetrics, loadHealthMetrics, loadCustomTargets } from '../lib/dataService';
 import { calculateLifetimeScore } from '../lib/lifetimeScoring';
 import {
   getLifetimeScore,
@@ -31,6 +31,7 @@ interface HealthContextType {
   trendData: { date: string; score: number }[];
   lifetimeScore: number;
   updateLifetimeScore: () => void;
+  customTargets: { steps: number; sleep: number; calories: number; exercise: number } | null;
 }
 
 const HealthContext = createContext<HealthContextType | undefined>(undefined);
@@ -101,6 +102,7 @@ export function HealthProvider({ children }: { children: ReactNode }) {
   });
   const [trendData, setTrendData] = useState<{ date: string; score: number }[]>([]);
   const [lifetimeScore, setLifetimeScore] = useState<number>(700); // Will be loaded from Firebase
+  const [customTargets, setCustomTargets] = useState<{ steps: number; sleep: number; calories: number; exercise: number } | null>(null);
 
   // Load real data from Firebase when user logs in
   useEffect(() => {
@@ -130,6 +132,15 @@ export function HealthProvider({ children }: { children: ReactNode }) {
       getLifetimeScore(authUser.uid)
         .then(score => setLifetimeScore(score))
         .catch(err => console.error('Error loading lifetime score:', err));
+
+      // Load custom targets from Firebase
+      loadCustomTargets(authUser.uid)
+        .then(targets => {
+          if (targets) {
+            setCustomTargets(targets);
+          }
+        })
+        .catch(err => console.error('Error loading custom targets:', err));
 
       // Load last 30 days of scores from Firebase
       getLast30DaysScores(authUser.uid)
@@ -251,6 +262,7 @@ export function HealthProvider({ children }: { children: ReactNode }) {
         trendData,
         lifetimeScore,
         updateLifetimeScore,
+        customTargets,
       }}
     >
       {children}

@@ -1,12 +1,39 @@
 import { useHealth } from '../context/HealthContext';
 import { GlassCard } from './GlassCard';
-import { TrendingUp, TrendingDown, Activity, Moon, Apple, Brain, Heart, AlertCircle, Target } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, Moon, Apple, Brain, Heart, AlertCircle, Target, Edit2 } from 'lucide-react';
 import { getPersonalizedTargets } from '../lib/healthEngine';
+import { saveCustomTargets } from '../lib/dataService';
 import { cn } from '../lib/utils';
+import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 export function HealthDashboard() {
-  const { scoreBreakdown, scoreChanges, trendData, user } = useHealth();
-  const targets = getPersonalizedTargets(user);
+  const { scoreBreakdown, scoreChanges, trendData, user, customTargets } = useHealth();
+  const { user: authUser } = useAuth();
+  const aiTargets = getPersonalizedTargets(user);
+  // Use custom targets if they exist, otherwise use AI targets
+  const targets = customTargets || aiTargets;
+  const [editingTarget, setEditingTarget] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+
+  const handleTargetSave = async (targetKey: string, newValue: string) => {
+    if (!authUser || !newValue) return;
+
+    const numValue = parseFloat(newValue);
+    const updatedTargets = {
+      steps: targetKey === 'steps' ? numValue : targets.steps,
+      sleep: targetKey === 'sleep' ? numValue : targets.sleep,
+      calories: targetKey === 'calories' ? numValue : targets.calories,
+      exercise: targetKey === 'exercise' ? numValue : targets.exercise,
+    };
+
+    try {
+      await saveCustomTargets(authUser.uid, updatedTargets);
+      console.log(`Target ${targetKey} updated to ${newValue}`);
+    } catch (error) {
+      console.error('Error saving target:', error);
+    }
+  };
 
   const categories = [
     { key: 'sleep', name: 'Sleep', icon: Moon, color: 'text-purple-400', bgColor: 'bg-purple-400/10' },
@@ -126,27 +153,152 @@ export function HealthDashboard() {
           </span>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-surface-container-high p-4 rounded-lg border border-surface-container-highest">
-            <p className="text-xs text-on-surface-variant mb-1">Daily Steps</p>
-            <p className="text-2xl font-black text-secondary">{targets.steps.toLocaleString()}</p>
+          {/* Steps Target */}
+          <div
+            onClick={() => {
+              setEditingTarget('steps');
+              setEditValue(targets.steps.toString());
+            }}
+            className="bg-surface-container-high p-4 rounded-lg border border-surface-container-highest hover:border-secondary/50 cursor-pointer transition-all group"
+          >
+            <p className="text-xs text-on-surface-variant mb-1 flex items-center justify-between">
+              Daily Steps
+              <Edit2 className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+            </p>
+            {editingTarget === 'steps' ? (
+              <input
+                autoFocus
+                type="number"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={() => {
+                  handleTargetSave('steps', editValue);
+                  setEditingTarget(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleTargetSave('steps', editValue);
+                    setEditingTarget(null);
+                  }
+                }}
+                className="w-full bg-surface-container text-secondary text-2xl font-black border-b border-secondary outline-none"
+              />
+            ) : (
+              <p className="text-2xl font-black text-secondary">{targets.steps.toLocaleString()}</p>
+            )}
             <p className="text-xs text-on-surface-variant mt-1">steps/day</p>
           </div>
-          <div className="bg-surface-container-high p-4 rounded-lg border border-surface-container-highest">
-            <p className="text-xs text-on-surface-variant mb-1">Sleep</p>
-            <p className="text-2xl font-black text-primary">{targets.sleep}h</p>
+
+          {/* Sleep Target */}
+          <div
+            onClick={() => {
+              setEditingTarget('sleep');
+              setEditValue(targets.sleep.toString());
+            }}
+            className="bg-surface-container-high p-4 rounded-lg border border-surface-container-highest hover:border-primary/50 cursor-pointer transition-all group"
+          >
+            <p className="text-xs text-on-surface-variant mb-1 flex items-center justify-between">
+              Sleep
+              <Edit2 className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+            </p>
+            {editingTarget === 'sleep' ? (
+              <input
+                autoFocus
+                type="number"
+                step="0.5"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={() => {
+                  handleTargetSave('sleep', editValue);
+                  setEditingTarget(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleTargetSave('sleep', editValue);
+                    setEditingTarget(null);
+                  }
+                }}
+                className="w-full bg-surface-container text-primary text-2xl font-black border-b border-primary outline-none"
+              />
+            ) : (
+              <p className="text-2xl font-black text-primary">{targets.sleep}h</p>
+            )}
             <p className="text-xs text-on-surface-variant mt-1">hours/night</p>
           </div>
-          <div className="bg-surface-container-high p-4 rounded-lg border border-surface-container-highest">
-            <p className="text-xs text-on-surface-variant mb-1">Calories</p>
-            <p className="text-2xl font-black text-tertiary">{targets.calories.toLocaleString()}</p>
+
+          {/* Calories Target */}
+          <div
+            onClick={() => {
+              setEditingTarget('calories');
+              setEditValue(targets.calories.toString());
+            }}
+            className="bg-surface-container-high p-4 rounded-lg border border-surface-container-highest hover:border-tertiary/50 cursor-pointer transition-all group"
+          >
+            <p className="text-xs text-on-surface-variant mb-1 flex items-center justify-between">
+              Calories
+              <Edit2 className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+            </p>
+            {editingTarget === 'calories' ? (
+              <input
+                autoFocus
+                type="number"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={() => {
+                  handleTargetSave('calories', editValue);
+                  setEditingTarget(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleTargetSave('calories', editValue);
+                    setEditingTarget(null);
+                  }
+                }}
+                className="w-full bg-surface-container text-tertiary text-2xl font-black border-b border-tertiary outline-none"
+              />
+            ) : (
+              <p className="text-2xl font-black text-tertiary">{targets.calories.toLocaleString()}</p>
+            )}
             <p className="text-xs text-on-surface-variant mt-1">kcal/day</p>
           </div>
-          <div className="bg-surface-container-high p-4 rounded-lg border border-surface-container-highest">
-            <p className="text-xs text-on-surface-variant mb-1">Exercise</p>
-            <p className="text-2xl font-black text-secondary">{targets.exercise}</p>
+
+          {/* Exercise Target */}
+          <div
+            onClick={() => {
+              setEditingTarget('exercise');
+              setEditValue(targets.exercise.toString());
+            }}
+            className="bg-surface-container-high p-4 rounded-lg border border-surface-container-highest hover:border-secondary/50 cursor-pointer transition-all group"
+          >
+            <p className="text-xs text-on-surface-variant mb-1 flex items-center justify-between">
+              Exercise
+              <Edit2 className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+            </p>
+            {editingTarget === 'exercise' ? (
+              <input
+                autoFocus
+                type="number"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={() => {
+                  handleTargetSave('exercise', editValue);
+                  setEditingTarget(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleTargetSave('exercise', editValue);
+                    setEditingTarget(null);
+                  }
+                }}
+                className="w-full bg-surface-container text-secondary text-2xl font-black border-b border-secondary outline-none"
+              />
+            ) : (
+              <p className="text-2xl font-black text-secondary">{targets.exercise}</p>
+            )}
             <p className="text-xs text-on-surface-variant mt-1">min/day</p>
           </div>
         </div>
+        <p className="text-xs text-on-surface-variant mt-3">💡 Click any target to customize it for your needs</p>
       </div>
 
       {/* Score Changes Explainer */}

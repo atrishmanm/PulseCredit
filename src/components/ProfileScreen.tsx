@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { GlassCard } from './GlassCard';
 import { ManualHealthUpdate } from './ManualHealthUpdate';
 import { SettingsModal } from './SettingsModal';
-import { DiseaseProfileSetup } from './DiseaseProfileSetup';
 import { HealthDashboard } from './HealthDashboard';
-import { Settings, LogOut, ChevronRight, Shield, Bell, CreditCard, User, Heart, Activity, BarChart3, Plus } from 'lucide-react';
+import { Settings, LogOut, ChevronRight, Shield, Bell, CreditCard, User, Heart, Activity, BarChart3, Plus, X, Loader, AlertCircle } from 'lucide-react';
 import { useHealth } from '../context/HealthContext';
+import { useAuth } from '../context/AuthContext';
+import { analyzeHealthConditionWithAI, PersonalizedHealthPlan } from '../lib/aiHealthAnalysis';
 import { cn } from '../lib/utils';
 
 interface ProfileScreenProps {}
@@ -13,10 +14,16 @@ interface ProfileScreenProps {}
 export function ProfileScreen({}: ProfileScreenProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'health'>('overview');
   const { metrics, updateMetrics, scoreBreakdown, user } = useHealth();
+  const { setUserDisease } = useAuth();
   const [isHealthConnectSyncing, setIsHealthConnectSyncing] = useState(false);
   const [isManualUpdateOpen, setIsManualUpdateOpen] = useState(false);
-  const [isDiseaseSetupOpen, setIsDiseaseSetupOpen] = useState(false);
   const [settingsModal, setSettingsModal] = useState<'personal' | 'health' | 'privacy' | 'notifications' | 'subscription' | null>(null);
+  const [showDiseaseEditor, setShowDiseaseEditor] = useState(false);
+  const [diseaseInput, setDiseaseInput] = useState('');
+  const [analyzing, setAnalyzing] = useState(false);
+  const [plan, setPlan] = useState<PersonalizedHealthPlan | null>(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleHealthConnectSync = async () => {
     setIsHealthConnectSyncing(true);
@@ -43,6 +50,45 @@ export function ProfileScreen({}: ProfileScreenProps) {
     { icon: Bell, label: 'Notifications', sub: 'Alerts & smart reminders' },
     { icon: CreditCard, label: 'Subscription', sub: 'Chronos Elite Member' },
   ];
+
+  const handleDiseaseAnalyze = async () => {
+    if (!diseaseInput.trim()) {
+      setError('Please enter your health condition');
+      return;
+    }
+
+    setAnalyzing(true);
+    setError('');
+
+    try {
+      const result = await analyzeHealthConditionWithAI(diseaseInput);
+      setPlan(result);
+      if (result.errorMessage) {
+        setError(result.errorMessage);
+      }
+    } catch (err) {
+      setError('Could not analyze health condition. Please try again.');
+      console.error('Error:', err);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const handleDiseaseConfirm = async () => {
+    if (!plan) return;
+    setLoading(true);
+    try {
+      await setUserDisease(plan.disease);
+      setShowDiseaseEditor(false);
+      setPlan(null);
+      setDiseaseInput('');
+    } catch (error) {
+      console.error('Error setting disease:', error);
+      setError('Error saving disease profile');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-12 pb-32">
@@ -170,10 +216,10 @@ export function ProfileScreen({}: ProfileScreenProps) {
                 </div>
               </div>
               <button
-                onClick={() => setIsDiseaseSetupOpen(true)}
+                onClick={() => setShowDiseaseEditor(true)}
                 className="bg-tertiary text-on-tertiary px-6 py-2 rounded-full text-xs font-bold w-full sm:w-auto hover:bg-tertiary/90 transition-colors"
               >
-                SETUP
+                {user.disease ? 'EDIT' : 'SETUP'}
               </button>
             </div>
 
@@ -217,8 +263,166 @@ export function ProfileScreen({}: ProfileScreenProps) {
           </div>
 
           <ManualHealthUpdate isOpen={isManualUpdateOpen} onClose={() => setIsManualUpdateOpen(false)} />
-          <DiseaseProfileSetup isOpen={isDiseaseSetupOpen} onClose={() => setIsDiseaseSetupOpen(false)} />
           <SettingsModal isOpen={settingsModal !== null} onClose={() => setSettingsModal(null)} tab={settingsModal} />
+
+          {/* Disease Editor Modal */}
+          {showDiseaseEditor && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-surface-container rounded-2xl max-w-xl w-full p-8 space-y-8 border border-white/10 max-h-[90vh] overflow-y-auto relative">
+                {/* Close Button */}
+                <button
+                  onClick={() => {
+                    setShowDiseaseEditor(false);
+                    setPlan(null);
+                    setDiseaseInput('');
+                    setError('');
+                  }}
+                  className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {/* Show Plan or Input */}
+                {!plan ? (
+                  <>
+                    {/* Header */}
+                    <div className="text-center space-y-3">
+                      <Heart className="w-8 h-8 text-secondary mx-auto" />
+                      <h1 className="font-headline text-3xl font-extrabold text-on-surface">
+                        Edit Your Health Profile
+                      </h1>
+                      <p className="text-on-surface-variant text-sm">
+                        Describe your health condition - AI will create a personalized plan
+                      </p>
+                    </div>
+
+                    {/* Input Form */}
+                    <div className="space-y-6">
+                      <div className="space-y-3">
+                        <label className="block text-sm font-semibold text-on-surface">
+                          Your Health Condition
+                        </label>
+                        <textarea
+                          autoFocus
+                          placeholder="e.g., I have type 2 diabetes and trying to manage my blood sugar levels..."
+                          value={diseaseInput}
+                          onChange={(e) => {
+                            setDiseaseInput(e.target.value);
+                            setError('');
+                          }}
+                          disabled={analyzing}
+                          rows={4}
+                          className="w-full bg-surface-container-high text-on-surface px-4 py-3 rounded-lg border border-white/10 focus:border-primary focus:outline-none transition-colors resize-none"
+                        />
+                      </div>
+
+                      {error && (
+                        <div className="bg-red-500/10 rounded-lg p-3 border border-red-500/20">
+                          <p className="text-sm text-red-400">{error}</p>
+                        </div>
+                      )}
+
+                      <button
+                        onClick={handleDiseaseAnalyze}
+                        disabled={analyzing || !diseaseInput.trim()}
+                        className={cn(
+                          'w-full px-6 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2',
+                          analyzing || !diseaseInput.trim()
+                            ? 'bg-primary/50 text-on-primary/50 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-primary to-primary-container text-on-primary hover:shadow-lg'
+                        )}
+                      >
+                        {analyzing ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-on-primary border-t-transparent rounded-full animate-spin" />
+                            Analyzing...
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle className="w-4 h-4" />
+                            Analyze & Save
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Confirmation Screen */}
+                    <div className="text-center space-y-2">
+                      <Heart className="w-8 h-8 text-secondary mx-auto" />
+                      <h1 className="font-headline text-3xl font-extrabold text-on-surface">
+                        Your Personalized Health Plan
+                      </h1>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="bg-surface-container-high rounded-xl p-4 border border-white/10">
+                        <p className="text-xs font-bold text-on-surface-variant uppercase mb-2">Profile</p>
+                        <p className="text-on-surface font-semibold">{plan.healthProfile}</p>
+                        <p className="text-xs text-on-surface-variant mt-2">AI Confidence: <strong>{plan.confidence}%</strong></p>
+                      </div>
+
+                      <div className="bg-primary/10 rounded-xl p-4 border border-primary/20">
+                        <p className="text-xs font-bold text-primary uppercase mb-3">🎯 Personalized Targets</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-surface-container rounded-lg p-3">
+                            <p className="text-xs text-on-surface-variant">Daily Steps</p>
+                            <p className="text-xl font-bold">{plan.personalizedTargets.dailySteps.toLocaleString()}</p>
+                          </div>
+                          <div className="bg-surface-container rounded-lg p-3">
+                            <p className="text-xs text-on-surface-variant">Sleep</p>
+                            <p className="text-xl font-bold">{plan.personalizedTargets.sleepHours}h</p>
+                          </div>
+                          <div className="bg-surface-container rounded-lg p-3">
+                            <p className="text-xs text-on-surface-variant">Calories</p>
+                            <p className="text-xl font-bold">{plan.personalizedTargets.calorieTarget.toLocaleString()}</p>
+                          </div>
+                          <div className="bg-surface-container rounded-lg p-3">
+                            <p className="text-xs text-on-surface-variant">Exercise</p>
+                            <p className="text-xl font-bold">{plan.personalizedTargets.exerciseMinutes}m</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-4 border-t border-white/5">
+                      <button
+                        onClick={() => {
+                          setPlan(null);
+                          setDiseaseInput('');
+                        }}
+                        disabled={loading}
+                        className="flex-1 px-6 py-3 rounded-lg text-on-surface font-bold bg-surface-container border border-surface-container-highest hover:bg-surface-container-high transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={handleDiseaseConfirm}
+                        disabled={loading}
+                        className={cn(
+                          'flex-1 px-6 py-3 rounded-lg text-on-primary font-bold transition-all flex items-center justify-center gap-2',
+                          loading ? 'bg-primary/50' : 'bg-gradient-to-r from-primary to-primary-container hover:shadow-lg'
+                        )}
+                      >
+                        {loading ? (
+                          <>
+                            <Loader className="w-4 h-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Heart className="w-4 h-4" />
+                            Confirm & Save
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </>
       ) : (
         <HealthDashboard />

@@ -230,3 +230,50 @@ export async function loadHealthMetrics(userId: string): Promise<HealthMetrics |
     return null;
   }
 }
+
+/**
+ * Save custom personalized targets to Firebase
+ */
+export async function saveCustomTargets(
+  userId: string,
+  targets: { steps: number; sleep: number; calories: number; exercise: number }
+): Promise<void> {
+  try {
+    const docRef = doc(db, 'userMetrics', userId);
+    await setDoc(
+      docRef,
+      {
+        customTargets: targets,
+        lastUpdatedTargets: Date.now(),
+      },
+      { merge: true }
+    );
+    console.log('Custom targets saved:', targets);
+  } catch (error) {
+    console.error('Error saving custom targets:', error);
+  }
+}
+
+/**
+ * Load custom personalized targets from Firebase
+ */
+export async function loadCustomTargets(
+  userId: string
+): Promise<{ steps: number; sleep: number; calories: number; exercise: number } | null> {
+  try {
+    const docRef = doc(db, 'userMetrics', userId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      if (data.customTargets) {
+        return data.customTargets;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error loading custom targets:', error);
+    return null;
+  }
+}
