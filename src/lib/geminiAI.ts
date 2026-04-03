@@ -163,7 +163,7 @@ Make your best effort to extract all required fields even if confidence is low.`
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
         'HTTP-Referer': 'https://vitecredit.web.app',
-        'X-Title': 'ViteCredit Prescription',
+        'X-Title': 'PulseCredit Prescription',
       },
       body: JSON.stringify({
         model: 'gpt-4-vision',

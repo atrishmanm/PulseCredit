@@ -12,7 +12,7 @@ export function TopBar({}: TopBarProps) {
         <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-primary to-secondary flex items-center justify-center border border-white/10">
           <span className="font-bold text-white text-sm">{user?.email?.[0].toUpperCase() || 'U'}</span>
         </div>
-        <span className="font-headline uppercase tracking-widest text-xs font-bold text-primary">ViteCredit</span>
+        <span className="font-headline uppercase tracking-widest text-xs font-bold text-primary">PulseCredit</span>
       </div>
       <div className="flex items-center gap-4">
         <button

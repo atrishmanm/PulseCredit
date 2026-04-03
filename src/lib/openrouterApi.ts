@@ -110,7 +110,7 @@ Focus on ${request.disease}-specific factors. Return only valid JSON.`;
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'HTTP-Referer': window.location.href,
-        'X-Title': 'ViteCredit Health Engine',
+        'X-Title': 'PulseCredit Health Engine',
       },
       body: JSON.stringify({
         model: 'openrouter/auto',
@@ -236,7 +236,7 @@ Return only valid JSON. Be specific and analyze all major health risks.`;
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'HTTP-Referer': window.location.href,
-        'X-Title': 'ViteCredit Health Engine',
+        'X-Title': 'PulseCredit Health Engine',
       },
       body: JSON.stringify({
         model: 'openrouter/auto',
@@ -337,7 +337,7 @@ Be specific to ${disease}. Return only valid JSON.`;
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'HTTP-Referer': window.location.href,
-        'X-Title': 'ViteCredit Health Engine',
+        'X-Title': 'PulseCredit Health Engine',
       },
       body: JSON.stringify({
         model: 'openrouter/auto',

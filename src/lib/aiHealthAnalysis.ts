@@ -142,7 +142,7 @@ Rules for values:
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
         'HTTP-Referer': 'https://vitecredit.web.app',
-        'X-Title': 'ViteCredit Health',
+        'X-Title': 'PulseCredit Health',
       },
       body: JSON.stringify({
         model: 'gpt-oss-120b',

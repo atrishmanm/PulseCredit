@@ -2,7 +2,7 @@ import { messaging } from './firebase.ts';
 import { getToken, onMessage } from 'firebase/messaging';
 
 /**
- * ViteCredit Push Notifications Setup
+ * PulseCredit Push Notifications Setup
  * Handles Firebase Cloud Messaging for meal reminders
  */
 
@@ -35,7 +35,7 @@ export function setupMessageListener() {
     const { title, body, image } = payload.notification || {};
 
     if ('Notification' in window) {
-      new Notification(title || 'ViteCredit', {
+      new Notification(title || 'PulseCredit', {
         body: body || 'You have a new update',
         icon: '/vitecredit-icon.png',
         badge: '/vitecredit-badge.png',

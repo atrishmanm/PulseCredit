@@ -56,7 +56,7 @@ export function AuthScreen() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="font-headline text-4xl font-black text-primary mb-2">
-            ViteCredit
+            PulseCredit
           </h1>
           <p className="text-on-surface-variant">
             {isSignUp ? 'Create Your Account' : 'Welcome Back'}
