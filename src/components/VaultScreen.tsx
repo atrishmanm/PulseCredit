@@ -124,15 +124,10 @@ export function VaultScreen() {
 
   const deleteRecord = async (id: string) => {
     try {
-<<<<<<< HEAD
       if (user?.uid) {
         await deletePrescription(id, user.uid);
         await loadPrescriptions();
       }
-=======
-      await deletePrescription(id, user?.uid);
-      await loadPrescriptions();
->>>>>>> eff9882 (added semi-circle map for Lifetime score)
     } catch (err) {
       console.error('Error deleting prescription:', err);
     }
