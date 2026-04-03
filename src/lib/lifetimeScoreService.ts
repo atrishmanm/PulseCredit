@@ -135,9 +135,8 @@ export async function getLast30DaysScores(userId: string): Promise<{ date: strin
 
     querySnapshot.forEach(doc => {
       const data = doc.data() as DailyScoreRecord;
-      const dateObj = new Date(data.date);
       scores.push({
-        date: dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        date: data.date, // Keep ISO format (YYYY-MM-DD)
         score: data.score,
       });
     });
@@ -165,9 +164,8 @@ export async function getAllDailyScores(userId: string): Promise<{ date: string;
 
     querySnapshot.forEach(doc => {
       const data = doc.data() as DailyScoreRecord;
-      const dateObj = new Date(data.date);
       scores.push({
-        date: dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        date: data.date, // Keep ISO format (YYYY-MM-DD)
         score: data.score,
       });
     });

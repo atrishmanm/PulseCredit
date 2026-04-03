@@ -15,13 +15,26 @@ interface LeaderboardEntry {
 }
 
 export function HealthLeaderboard() {
-  const { scoreBreakdown, user } = useHealth();
+  const { lifetimeScore, user } = useHealth();
+
+  const getRankIcon = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return <Crown className="w-6 h-6 text-yellow-400 fill-yellow-400" />;
+      case 2:
+        return <Trophy className="w-6 h-6 text-gray-400 fill-gray-400" />;
+      case 3:
+        return <Medal className="w-6 h-6 text-orange-400 fill-orange-400" />;
+      default:
+        return <span className="font-bold text-on-surface-variant">#{rank}</span>;
+    }
+  };
 
   const userEntry: LeaderboardEntry = {
     id: user.id,
     name: 'You',
     avatar: user.avatar,
-    score: scoreBreakdown.total,
+    score: Math.round(lifetimeScore),
     level: user.level,
     streak: user.streak,
     trend: 18,
@@ -40,6 +53,9 @@ export function HealthLeaderboard() {
     .sort((a, b) => b.score - a.score)
     .map((entry, index) => ({ ...entry, rank: index + 1 }));
 
+  // Find your actual rank in the sorted leaderboard
+  const yourRankEntry = leaderboard.find(entry => entry.id === user.id);
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -54,36 +70,38 @@ export function HealthLeaderboard() {
       </div>
 
       {/* Your Rank Card */}
-      <GlassCard className="p-8 bg-gradient-to-br from-primary/10 to-secondary/10 border-2 border-primary/30">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-16 h-16 rounded-full border-4 border-primary p-1">
-                <img
-                  src={leaderboard[1].avatar}
-                  alt="You"
-                  className="w-full h-full rounded-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
+      {yourRankEntry && (
+        <GlassCard className="p-8 bg-gradient-to-br from-primary/10 to-secondary/10 border-2 border-primary/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-16 h-16 rounded-full border-4 border-primary p-1">
+                  <img
+                    src={yourRankEntry.avatar}
+                    alt="You"
+                    className="w-full h-full rounded-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+                <div className="absolute -bottom-1 -right-1 bg-primary text-on-primary w-8 h-8 rounded-full flex items-center justify-center border-2 border-background">
+                  <Medal className="w-4 h-4 fill-current" />
+                </div>
               </div>
-              <div className="absolute -bottom-1 -right-1 bg-primary text-on-primary w-8 h-8 rounded-full flex items-center justify-center border-2 border-background">
-                <Medal className="w-4 h-4 fill-current" />
+              <div>
+                <h3 className="font-black text-xl">Your Rank: #{yourRankEntry.rank}</h3>
+                <p className="text-on-surface-variant text-sm">Level {yourRankEntry.level} • {yourRankEntry.streak}-day streak</p>
               </div>
             </div>
-            <div>
-              <h3 className="font-black text-xl">Your Rank: #{leaderboard[1].rank}</h3>
-              <p className="text-on-surface-variant text-sm">Level {leaderboard[1].level} • {leaderboard[1].streak}-day streak</p>
+            <div className="text-right">
+              <p className="text-4xl font-black font-headline text-primary">{yourRankEntry.score}</p>
+              <div className="flex items-center justify-end gap-1 text-secondary mt-1">
+                <TrendingUp className="w-4 h-4" />
+                <span className="text-sm font-bold">+{yourRankEntry.trend} this week</span>
+              </div>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-4xl font-black font-headline text-primary">{leaderboard[1].score}</p>
-            <div className="flex items-center justify-end gap-1 text-secondary mt-1">
-              <TrendingUp className="w-4 h-4" />
-              <span className="text-sm font-bold">+{leaderboard[1].trend} this week</span>
-            </div>
-          </div>
-        </div>
-      </GlassCard>
+        </GlassCard>
+      )}
 
       {/* Leaderboard List */}
       <div className="space-y-3">

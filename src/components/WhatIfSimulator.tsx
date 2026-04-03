@@ -1,15 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useHealth } from '../context/HealthContext';
 import { GlassCard } from './GlassCard';
-import { Play, RotateCcw, TrendingUp, TrendingDown, Sliders } from 'lucide-react';
+import { Play, RotateCcw, TrendingUp, TrendingDown, Sliders, ChevronDown } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { HealthMetrics } from '../lib/healthEngine';
+import { simulateWhatIfWithAI, SimulationAnalysis } from '../lib/openrouterApi';
 
 export function WhatIfSimulator() {
-  const { metrics, risks, simulateRisks } = useHealth();
+  const { metrics, risks, user } = useHealth();
   const [timeframe, setTimeframe] = useState(3); // months
   const [adjustments, setAdjustments] = useState<Partial<HealthMetrics>>({});
-  const [simulatedRisks, setSimulatedRisks] = useState<ReturnType<typeof simulateRisks> | null>(null);
+  const [simulatedRisks, setSimulatedRisks] = useState<{
+    obesity: number;
+    diabetes: number;
+    cardiovascularDisease: number;
+    stressBurnout: number;
+    sleepDisorder: number;
+  } | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<SimulationAnalysis | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showReasoning, setShowReasoning] = useState(true);
 
   const simulations = [
     {
@@ -59,15 +69,60 @@ export function WhatIfSimulator() {
     },
   ];
 
-  const runSimulation = (adjustment: Partial<HealthMetrics>) => {
+  const runSimulation = async (adjustment: Partial<HealthMetrics>) => {
     setAdjustments(adjustment);
-    const result = simulateRisks(adjustment, timeframe);
-    setSimulatedRisks(result);
+    setSimulatedRisks(null);
+    setAiAnalysis(null);
+    setIsAnalyzing(true);
+    setShowReasoning(true);
+
+    try {
+      // Always get AI analysis with complete risk projections
+      const projectedMetrics = {
+        sleep: { ...metrics.sleep, ...adjustment.sleep },
+        activity: { ...metrics.activity, ...adjustment.activity },
+        diet: { ...metrics.diet, ...adjustment.diet },
+        stress: { ...metrics.stress, ...adjustment.stress },
+        habits: metrics.habits,
+      };
+
+      console.log('Running simulation with:', { disease: user.disease, timeframe });
+
+      const analysis = await simulateWhatIfWithAI({
+        disease: user.disease || 'general health',
+        currentMetrics: {
+          sleep: metrics.sleep,
+          activity: metrics.activity,
+          diet: metrics.diet,
+          stress: metrics.stress,
+          habits: metrics.habits,
+        },
+        projectedMetrics,
+        timeframeMonths: timeframe,
+      });
+
+      console.log('AI Analysis received:', analysis);
+
+      // Use AI-projected risks if available
+      if (analysis.projectedRisks) {
+        console.log('Setting projected risks:', analysis.projectedRisks);
+        setSimulatedRisks(analysis.projectedRisks);
+      } else {
+        console.warn('No projectedRisks in analysis response');
+      }
+      setAiAnalysis(analysis);
+    } catch (error) {
+      console.error('Simulation error:', error);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const reset = () => {
     setAdjustments({});
     setSimulatedRisks(null);
+    setAiAnalysis(null);
+    setShowReasoning(true);
   };
 
   const getRiskChange = (current: number, simulated: number) => {
@@ -88,7 +143,39 @@ export function WhatIfSimulator() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative">
+      {/* Floating Loading Overlay */}
+      {isAnalyzing && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          {/* Translucent background */}
+          <div className="absolute inset-0 bg-background/40 backdrop-blur-sm pointer-events-none" />
+
+          {/* Glass card loading indicator */}
+          <div className="relative bg-surface-container/60 backdrop-blur-xl border border-primary/30 rounded-2xl px-8 py-6 shadow-2xl shadow-primary/20 flex flex-col items-center gap-4 animate-in fade-in duration-300">
+            {/* Animated spinner */}
+            <div className="relative w-16 h-16">
+              {/* Outer ring */}
+              <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
+              {/* Spinning ring */}
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary border-r-secondary animate-spin" />
+              {/* Inner pulse */}
+              <div className="absolute inset-2 rounded-full border-2 border-primary/30 animate-pulse" />
+            </div>
+
+            {/* Loading text */}
+            <div className="text-center">
+              <p className="font-bold text-on-surface text-sm mb-1">Analyzing Your Scenario</p>
+              <p className="text-xs text-on-surface-variant">Using AI to project your health trajectory...</p>
+            </div>
+
+            {/* Progress indicator */}
+            <div className="w-32 h-1 bg-surface-container-high rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-primary to-secondary animate-pulse" />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="text-center space-y-2">
         <h2 className="text-3xl font-black font-headline">What-If Simulator</h2>
@@ -126,8 +213,9 @@ export function WhatIfSimulator() {
           <button
             key={index}
             onClick={() => runSimulation(sim.adjustment)}
+            disabled={isAnalyzing}
             className={cn(
-              "bg-surface-container p-6 rounded-xl text-left transition-all hover:bg-surface-container-high active:scale-95 border-2",
+              "bg-surface-container p-6 rounded-xl text-left transition-all hover:bg-surface-container-high active:scale-95 border-2 disabled:opacity-50 disabled:cursor-not-allowed",
               JSON.stringify(adjustments) === JSON.stringify(sim.adjustment)
                 ? "border-primary"
                 : "border-transparent"
@@ -146,11 +234,63 @@ export function WhatIfSimulator() {
         ))}
       </div>
 
-      {/* Results */}
+      {/* Results with AI Reasoning */}
       {simulatedRisks && (
         <div className="space-y-6 animate-in fade-in duration-500">
+          {/* AI Analysis Section - Show First */}
+          {aiAnalysis && (
+            <div className="space-y-4">
+              <button
+                onClick={() => setShowReasoning(!showReasoning)}
+                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl border-2 border-primary/20 hover:border-primary/40 transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">🧠</span>
+                  <div className="text-left">
+                    <p className="font-bold text-sm text-on-surface">AI Analysis: Why These Results</p>
+                    <p className="text-xs text-on-surface-variant">{aiAnalysis.impactSummary}</p>
+                  </div>
+                </div>
+                <ChevronDown className={cn("w-4 h-4 text-primary transition-transform", showReasoning && "rotate-180")} />
+              </button>
+
+              {showReasoning && (
+                <GlassCard className="p-6 space-y-4 bg-primary/5">
+                  <div>
+                    <p className="font-bold text-sm text-on-surface mb-3">Step-by-Step Analysis:</p>
+                    <div className="space-y-2">
+                      {aiAnalysis.reasoningSteps.map((step, idx) => (
+                        <div key={idx} className="flex gap-3">
+                          <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0">
+                            {idx + 1}
+                          </div>
+                          <p className="text-sm text-on-surface-variant pt-0.5">{step}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {aiAnalysis.keyFactors.length > 0 && (
+                    <div>
+                      <p className="font-bold text-sm text-on-surface mb-2">Key Health Factors:</p>
+                      <div className="space-y-2">
+                        {aiAnalysis.keyFactors.map((factor, idx) => (
+                          <div key={idx} className="bg-surface-container p-3 rounded-lg">
+                            <p className="text-sm font-medium text-on-surface">{factor.factor}</p>
+                            <p className="text-xs text-on-surface-variant mt-1">{factor.impact}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </GlassCard>
+              )}
+            </div>
+          )}
+
+          {/* Results Header */}
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-black font-headline">Projected Results</h3>
+            <h3 className="text-xl font-black font-headline">Projected Results ({timeframe}mo)</h3>
             <button
               onClick={reset}
               className="flex items-center gap-2 text-sm font-bold text-on-surface-variant hover:text-primary transition-colors"

@@ -10,7 +10,10 @@ import {
   updateDoc,
   doc,
   deleteDoc,
+  setDoc,
+  getDoc,
 } from 'firebase/firestore';
+import { HealthMetrics } from './healthEngine';
 
 export interface FoodLog {
   id?: string;
@@ -183,3 +186,47 @@ export function calculateDailyNutrition(logs: FoodLog[]) {
   };
 }
 
+/**
+ * Save user health metrics to Firebase (for persistence across sessions)
+ */
+export async function saveHealthMetrics(userId: string, metrics: HealthMetrics): Promise<void> {
+  try {
+    const docRef = doc(db, 'userMetrics', userId);
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+    await setDoc(
+      docRef,
+      {
+        userId,
+        ...metrics,
+        date: today,
+        lastUpdated: Date.now(),
+      },
+      { merge: true }
+    );
+  } catch (error) {
+    console.error('Error saving health metrics:', error);
+  }
+}
+
+/**
+ * Get user health metrics from Firebase
+ */
+export async function loadHealthMetrics(userId: string): Promise<HealthMetrics | null> {
+  try {
+    const docRef = doc(db, 'userMetrics', userId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      // Return metrics without userId and timestamp fields
+      const { userId: _, date, lastUpdated, ...metrics } = data;
+      return metrics as HealthMetrics;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error loading health metrics:', error);
+    return null;
+  }
+}

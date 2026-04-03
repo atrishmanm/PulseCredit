@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { UserProfile } from '../types';
 import {
   HealthMetrics,
@@ -10,7 +10,7 @@ import {
   simulateFutureRisks
 } from '../lib/healthEngine';
 import { useAuth } from './AuthContext';
-import { getFoodLogsForDate, calculateDailyNutrition } from '../lib/dataService';
+import { getFoodLogsForDate, calculateDailyNutrition, saveHealthMetrics, loadHealthMetrics } from '../lib/dataService';
 import { calculateLifetimeScore } from '../lib/lifetimeScoring';
 import {
   getLifetimeScore,
@@ -117,6 +117,15 @@ export function HealthProvider({ children }: { children: ReactNode }) {
         maxXp: prev.maxXp,
       }));
 
+      // Load metrics from Firebase
+      loadHealthMetrics(authUser.uid)
+        .then(savedMetrics => {
+          if (savedMetrics) {
+            setMetrics(savedMetrics);
+          }
+        })
+        .catch(err => console.error('Error loading metrics:', err));
+
       // Load lifetime score from Firebase
       getLifetimeScore(authUser.uid)
         .then(score => setLifetimeScore(score))
@@ -144,16 +153,6 @@ export function HealthProvider({ children }: { children: ReactNode }) {
                 proteinGrams: nutrition.totalProtein,
               }
             }));
-          } else {
-            // No food logged yet, reset to 0
-            setMetrics(prev => ({
-              ...prev,
-              diet: {
-                ...prev.diet,
-                calories: 0,
-                proteinGrams: 0,
-              }
-            }));
           }
         } catch (error) {
           console.error('Error loading food data:', error);
@@ -164,7 +163,7 @@ export function HealthProvider({ children }: { children: ReactNode }) {
     }
   }, [authUser, userData]);
 
-  // Recalculate everything when metrics change
+  // Recalculate health scores when metrics change
   useEffect(() => {
     const { breakdown, changes } = calculateHealthScore(metrics, user);
     setScoreBreakdown(breakdown);
@@ -175,12 +174,39 @@ export function HealthProvider({ children }: { children: ReactNode }) {
 
     setUser(prev => ({ ...prev, vitalityScore: breakdown.total }));
 
-    // Save daily score to Firebase if user is logged in
+    // Save daily score to Firebase
     if (authUser) {
       saveDailyScore(authUser.uid, breakdown.total)
+        .then(() => {
+          // Reload trend data after saving daily score
+          return getLast30DaysScores(authUser.uid);
+        })
+        .then(scores => setTrendData(scores))
         .catch(err => console.error('Error saving daily score:', err));
     }
   }, [metrics, authUser]);
+
+  // Save metrics to Firebase (debounced with a 2-second delay)
+  useEffect(() => {
+    if (!authUser) return;
+
+    const timer = setTimeout(() => {
+      saveHealthMetrics(authUser.uid, metrics)
+        .catch(err => console.error('Error persisting metrics:', err));
+    }, 2000);
+
+    return () => clearTimeout(timer); // Cancel previous save if metrics change again
+  }, [metrics, authUser]);
+
+  // Update lifetime score separately (with EMA formula)
+  useEffect(() => {
+    if (authUser && scoreBreakdown.total > 0) {
+      const newLifetimeScore = calculateLifetimeScore(lifetimeScore, scoreBreakdown.total);
+      setLifetimeScore(newLifetimeScore);
+      saveLifetimeScoreToFirebase(authUser.uid, newLifetimeScore)
+        .catch(err => console.error('Error updating lifetime score:', err));
+    }
+  }, [scoreBreakdown.total, authUser]);
 
   const updateUser = (updates: Partial<UserProfile>) => {
     setUser(prev => ({ ...prev, ...updates }));

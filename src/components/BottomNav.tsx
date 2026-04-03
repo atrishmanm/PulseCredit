@@ -18,15 +18,15 @@ export function BottomNav({ activeScreen, onScreenChange }: BottomNavProps) {
   ] as const;
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 px-4 pb-2 bg-surface-container/60 backdrop-blur-xl rounded-[3rem] mx-4 mb-6 w-[calc(100%-2rem)] shadow-[0_20px_40px_rgba(0,0,0,0.4)] border border-white/5">
+    <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex justify-center items-center gap-2 h-20 px-6 bg-surface-container/60 backdrop-blur-xl rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.4)] border border-white/5">
       {items.map((item) => (
         <button
           key={item.id}
           onClick={() => onScreenChange(item.id)}
           className={cn(
-            "flex flex-col items-center justify-center transition-all active:scale-90 duration-300",
-            activeScreen === item.id 
-              ? "text-secondary drop-shadow-[0_0_8px_rgba(76,224,130,0.4)]" 
+            "flex flex-col items-center justify-center transition-all active:scale-90 duration-300 px-3",
+            activeScreen === item.id
+              ? "text-secondary drop-shadow-[0_0_8px_rgba(76,224,130,0.4)]"
               : "text-white/40 hover:text-white"
           )}
         >

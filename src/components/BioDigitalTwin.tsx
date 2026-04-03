@@ -1,66 +1,70 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useHealth } from '../context/HealthContext';
 import { GlassCard } from './GlassCard';
-import { Activity, Heart, Brain, Footprints, Moon, Apple } from 'lucide-react';
+import { Activity, Heart, Brain, Footprints, Moon, Apple, Loader } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { generateBioTwinAnalysisWithAI } from '../lib/openrouterApi';
 
-interface BodyPart {
-  id: string;
+interface BodyPartAnalysis {
   name: string;
   risk: number;
-  top: string;
-  left: string;
-  description: string;
+  explanation: string;
+  originalDescription?: string;
 }
 
 export function BioDigitalTwin() {
-  const { risks, metrics } = useHealth();
-  const [selectedPart, setSelectedPart] = useState<BodyPart | null>(null);
+  const { risks, metrics, user } = useHealth();
+  const [selectedPart, setSelectedPart] = useState<BodyPartAnalysis | null>(null);
   const [timeSlider, setTimeSlider] = useState(0); // 0 = now, 5 = 5 years
+  const [bodyPartAnalyses, setBodyPartAnalyses] = useState<BodyPartAnalysis[]>([]);
+  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
 
-  // Map health risks to body parts
-  const bodyParts: BodyPart[] = [
-    {
-      id: 'brain',
-      name: 'Mental Health',
-      risk: risks.stressBurnout,
-      top: '15%',
-      left: '50%',
-      description: `Stress level at ${metrics.stress.level}%. Screen time: ${metrics.stress.screenTimeHours}h/day.`,
-    },
-    {
-      id: 'heart',
-      name: 'Cardiovascular',
-      risk: risks.cardiovascularDisease,
-      top: '35%',
-      left: '45%',
-      description: `Based on activity (${metrics.activity.exerciseMinutes}min/day) and diet quality.`,
-    },
-    {
-      id: 'metabolism',
-      name: 'Metabolic Health',
-      risk: risks.diabetes,
-      top: '50%',
-      left: '50%',
-      description: `Diabetes risk ${risks.diabetes}%. Sleep quality: ${metrics.sleep.quality}%.`,
-    },
-    {
-      id: 'body',
-      name: 'Body Composition',
-      risk: risks.obesity,
-      top: '60%',
-      left: '50%',
-      description: `${metrics.activity.dailySteps} steps/day. Sedentary: ${metrics.activity.sedentaryHours}h.`,
-    },
-    {
-      id: 'sleep',
-      name: 'Sleep System',
-      risk: risks.sleepDisorder,
-      top: '15%',
-      left: '75%',
-      description: `Avg ${metrics.sleep.averageHours}h/night. Consistency: ${metrics.sleep.consistency}%.`,
-    },
-  ];
+  // Load AI analysis on mount
+  useEffect(() => {
+    if (user.disease && user.disease !== 'none') {
+      setIsLoadingAnalysis(true);
+      generateBioTwinAnalysisWithAI(user.disease, {
+        obesity: risks.obesity,
+        diabetes: risks.diabetes,
+        cardiovascular: risks.cardiovascularDisease,
+        stress: risks.stressBurnout,
+        sleep: risks.sleepDisorder,
+      })
+        .then(result => {
+          setBodyPartAnalyses(result.bodyPartAnalyses);
+        })
+        .finally(() => setIsLoadingAnalysis(false));
+    } else {
+      // Fallback to default descriptions
+      setBodyPartAnalyses([
+        {
+          name: 'Mental Health',
+          risk: risks.stressBurnout,
+          explanation: `Stress level at ${metrics.stress.level}%. Screen time: ${metrics.stress.screenTimeHours}h/day.`,
+        },
+        {
+          name: 'Cardiovascular',
+          risk: risks.cardiovascularDisease,
+          explanation: `Based on activity (${metrics.activity.exerciseMinutes}min/day) and diet quality.`,
+        },
+        {
+          name: 'Metabolic Health',
+          risk: risks.diabetes,
+          explanation: `Diabetes risk ${risks.diabetes}%. Sleep quality: ${metrics.sleep.quality}%.`,
+        },
+        {
+          name: 'Body Composition',
+          risk: risks.obesity,
+          explanation: `${metrics.activity.dailySteps} steps/day. Sedentary: ${metrics.activity.sedentaryHours}h.`,
+        },
+        {
+          name: 'Sleep System',
+          risk: risks.sleepDisorder,
+          explanation: `Avg ${metrics.sleep.averageHours}h/night. Consistency: ${metrics.sleep.consistency}%.`,
+        },
+      ]);
+    }
+  }, [user.disease, risks, metrics]);
 
   // Calculate projected risk based on time slider
   const getProjectedRisk = (currentRisk: number) => {
@@ -84,13 +88,24 @@ export function BioDigitalTwin() {
   };
 
   const getBodyColor = () => {
-    const avgRisk = (risks.obesity + risks.diabetes + risks.cardiovascularDisease + risks.stressBurnout + risks.sleepDisorder) / 5;
+    const avgRisk = bodyPartAnalyses.length > 0
+      ? bodyPartAnalyses.reduce((sum, p) => sum + p.risk, 0) / bodyPartAnalyses.length
+      : (risks.obesity + risks.diabetes + risks.cardiovascularDisease + risks.stressBurnout + risks.sleepDisorder) / 5;
     const projectedRisk = getProjectedRisk(avgRisk);
 
     if (projectedRisk < 30) return 'from-green-500/20 to-blue-500/20';
     if (projectedRisk < 60) return 'from-yellow-500/20 to-orange-500/20';
     return 'from-orange-500/20 to-red-500/20';
   };
+
+  // Positioning for body parts on SVG
+  const bodyPartPositions = [
+    { name: 'Mental Health', top: '15%', left: '50%' },
+    { name: 'Cardiovascular', top: '35%', left: '45%' },
+    { name: 'Metabolic Health', top: '50%', left: '50%' },
+    { name: 'Body Composition', top: '60%', left: '50%' },
+    { name: 'Sleep System', top: '15%', left: '75%' },
+  ];
 
   return (
     <div className="space-y-8">
@@ -176,22 +191,23 @@ export function BioDigitalTwin() {
                 </svg>
 
                 {/* Risk Hotspots */}
-                {bodyParts.map((part) => {
+                {bodyPartAnalyses.map((part, idx) => {
+                  const position = bodyPartPositions[idx] || { top: '50%', left: '50%' };
                   const projectedRisk = getProjectedRisk(part.risk);
                   return (
                     <button
-                      key={part.id}
+                      key={part.name}
                       onClick={() => setSelectedPart(part)}
                       className={cn(
                         "absolute w-8 h-8 rounded-full -translate-x-1/2 -translate-y-1/2 transition-all duration-500 cursor-pointer",
                         getRiskColor(projectedRisk),
                         getRiskGlow(projectedRisk),
                         "hover:scale-150 shadow-xl",
-                        selectedPart?.id === part.id && "scale-150 ring-4 ring-white/50"
+                        selectedPart?.name === part.name && "scale-150 ring-4 ring-white/50"
                       )}
                       style={{
-                        top: part.top,
-                        left: part.left,
+                        top: position.top,
+                        left: position.left,
                         animation: `pulse ${2 + projectedRisk / 50}s ease-in-out infinite`,
                       }}
                     >
@@ -206,7 +222,12 @@ export function BioDigitalTwin() {
 
         {/* Right: Details */}
         <div className="space-y-4">
-          {selectedPart ? (
+          {isLoadingAnalysis ? (
+            <GlassCard className="p-8 flex items-center justify-center gap-2">
+              <Loader className="w-4 h-4 animate-spin text-primary" />
+              <p className="text-sm text-on-surface-variant">Loading AI analysis...</p>
+            </GlassCard>
+          ) : selectedPart ? (
             <GlassCard className="p-6 border-2 border-primary/30">
               <h3 className="text-xl font-black font-headline mb-2">{selectedPart.name}</h3>
               <div className="flex items-center gap-2 mb-4">
@@ -217,7 +238,7 @@ export function BioDigitalTwin() {
                 </span>
               </div>
               <p className="text-sm text-on-surface-variant leading-relaxed mb-4">
-                {selectedPart.description}
+                {selectedPart.explanation}
               </p>
               {timeSlider > 0 && getProjectedRisk(selectedPart.risk) > selectedPart.risk && (
                 <div className="p-3 bg-tertiary/10 rounded-lg border border-tertiary/20">
@@ -235,15 +256,15 @@ export function BioDigitalTwin() {
 
           {/* All Risks Overview */}
           <div className="space-y-3">
-            {bodyParts.map((part) => {
+            {bodyPartAnalyses.map((part) => {
               const projectedRisk = getProjectedRisk(part.risk);
               return (
                 <button
-                  key={part.id}
+                  key={part.name}
                   onClick={() => setSelectedPart(part)}
                   className={cn(
                     "w-full bg-surface-container rounded-lg p-4 text-left transition-all hover:bg-surface-container-high",
-                    selectedPart?.id === part.id && "bg-surface-container-high ring-2 ring-primary/30"
+                    selectedPart?.name === part.name && "bg-surface-container-high ring-2 ring-primary/30"
                   )}
                 >
                   <div className="flex items-center justify-between">

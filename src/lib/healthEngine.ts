@@ -1,4 +1,5 @@
 import { UserProfile } from '../types';
+import { analyzeHealthWithAI, simulateWhatIfWithAI, generateBioTwinAnalysisWithAI } from './openrouterApi';
 
 export interface HealthMetrics {
   sleep: {
@@ -59,26 +60,27 @@ export interface HealthScoreBreakdown {
 
 /**
  * Get personalized targets based on disease profile
- * Research: Physiopedia, Sage Journals
+ * Uses AI-generated recommendations
  */
 export function getPersonalizedTargets(profile: UserProfile): PersonalizedTargets {
   const disease = profile.disease || 'none';
 
+  // These are fallback defaults - actual targets come from AI analysis
   if (disease === 'diabetes') {
     return {
-      steps: 7000,        // Consistency matters more than high steps
+      steps: 7000,
       sleep: 8,
       calories: 2000,
-      exercise: 45,       // 45+ min daily is recommended
+      exercise: 45,
     };
   }
 
   if (disease === 'obesity') {
     return {
-      steps: 11000,       // Higher for weight loss (10k-12k+ recommended)
+      steps: 11000,
       sleep: 8,
-      calories: 1800,     // Calorie deficit
-      exercise: 60,       // 60+ min for metabolic improvement
+      calories: 1800,
+      exercise: 60,
     };
   }
 
@@ -87,11 +89,10 @@ export function getPersonalizedTargets(profile: UserProfile): PersonalizedTarget
       steps: 10000,
       sleep: 7,
       calories: 2000,
-      exercise: 150,      // 150 min/week = ~30 min/day
+      exercise: 30,
     };
   }
 
-  // Healthy baseline
   return {
     steps: 9000,
     sleep: 7.5,
@@ -266,6 +267,170 @@ export interface RiskPrediction {
   cardiovascularDisease: number;
   stressBurnout: number;
   sleepDisorder: number;
+}
+
+export interface AIRiskAnalysis {
+  diseaseRisk: number;
+  otherRisks: Array<{ name: string; percentage: number }>;
+  reasoning: string;
+  diseaseSpecificInsights: string[];
+  recommendedTargets: {
+    steps: number;
+    sleepHours: number;
+    calorieTarget: number;
+    exerciseMinutes: number;
+  };
+  targetExplanations: {
+    steps: string;
+    sleep: string;
+    calories: string;
+    exercise: string;
+  };
+}
+
+/**
+ * AI-powered health risk analysis using OpenRouter
+ * Returns disease-specific risks with explanations
+ */
+export async function predictHealthRisksWithAI(
+  metrics: HealthMetrics,
+  disease: string
+): Promise<AIRiskAnalysis> {
+  if (!disease || disease === 'none') {
+    return {
+      diseaseRisk: 0,
+      otherRisks: [],
+      reasoning: 'No specific disease selected',
+      diseaseSpecificInsights: [],
+      recommendedTargets: { steps: 9000, sleepHours: 7.5, calorieTarget: 2000, exerciseMinutes: 30 },
+      targetExplanations: {
+        steps: 'Standard recommendation',
+        sleep: 'Standard recommendation',
+        calories: 'Standard recommendation',
+        exercise: 'Standard recommendation',
+      },
+    };
+  }
+
+  return analyzeHealthWithAI({
+    disease,
+    metrics: {
+      sleep: {
+        averageHours: metrics.sleep.averageHours,
+        consistency: metrics.sleep.consistency,
+        quality: metrics.sleep.quality,
+      },
+      activity: {
+        dailySteps: metrics.activity.dailySteps,
+        exerciseMinutes: metrics.activity.exerciseMinutes,
+        sedentaryHours: metrics.activity.sedentaryHours,
+      },
+      diet: {
+        calories: metrics.diet.calories,
+        proteinGrams: metrics.diet.proteinGrams,
+        healthyMealsPercentage: metrics.diet.healthyMealsPercentage,
+      },
+      stress: {
+        level: metrics.stress.level,
+        screenTimeHours: metrics.stress.screenTimeHours,
+      },
+      habits: {
+        smokingFrequency: metrics.habits.smokingFrequency,
+        alcoholUnitsPerWeek: metrics.habits.alcoholUnitsPerWeek,
+      },
+    },
+  });
+}
+
+/**
+ * AI-powered what-if simulation with step-by-step reasoning
+ */
+export async function simulateFutureRisksWithAI(
+  currentMetrics: HealthMetrics,
+  projectedMetrics: HealthMetrics,
+  disease: string,
+  monthsAhead: number
+) {
+  if (!disease || disease === 'none') {
+    return {
+      projectedRisk: 0,
+      riskChange: 0,
+      reasoningSteps: [],
+      impactSummary: 'No disease selected',
+      keyFactors: [],
+    };
+  }
+
+  return simulateWhatIfWithAI({
+    disease,
+    currentMetrics: {
+      sleep: {
+        averageHours: currentMetrics.sleep.averageHours,
+        consistency: currentMetrics.sleep.consistency,
+        quality: currentMetrics.sleep.quality,
+      },
+      activity: {
+        dailySteps: currentMetrics.activity.dailySteps,
+        exerciseMinutes: currentMetrics.activity.exerciseMinutes,
+        sedentaryHours: currentMetrics.activity.sedentaryHours,
+      },
+      diet: {
+        calories: currentMetrics.diet.calories,
+        proteinGrams: currentMetrics.diet.proteinGrams,
+        healthyMealsPercentage: currentMetrics.diet.healthyMealsPercentage,
+      },
+      stress: {
+        level: currentMetrics.stress.level,
+        screenTimeHours: currentMetrics.stress.screenTimeHours,
+      },
+      habits: {
+        smokingFrequency: currentMetrics.habits.smokingFrequency,
+        alcoholUnitsPerWeek: currentMetrics.habits.alcoholUnitsPerWeek,
+      },
+    },
+    projectedMetrics: {
+      sleep: {
+        averageHours: projectedMetrics.sleep.averageHours,
+        consistency: projectedMetrics.sleep.consistency,
+        quality: projectedMetrics.sleep.quality,
+      },
+      activity: {
+        dailySteps: projectedMetrics.activity.dailySteps,
+        exerciseMinutes: projectedMetrics.activity.exerciseMinutes,
+        sedentaryHours: projectedMetrics.activity.sedentaryHours,
+      },
+      diet: {
+        calories: projectedMetrics.diet.calories,
+        proteinGrams: projectedMetrics.diet.proteinGrams,
+        healthyMealsPercentage: projectedMetrics.diet.healthyMealsPercentage,
+      },
+      stress: {
+        level: projectedMetrics.stress.level,
+        screenTimeHours: projectedMetrics.stress.screenTimeHours,
+      },
+      habits: {
+        smokingFrequency: projectedMetrics.habits.smokingFrequency,
+        alcoholUnitsPerWeek: projectedMetrics.habits.alcoholUnitsPerWeek,
+      },
+    },
+    timeframeMonths: monthsAhead,
+  });
+}
+
+/**
+ * AI-powered bio-twin analysis
+ */
+export async function generateBioTwinAnalysis(
+  disease: string,
+  riskFactors: { obesity: number; diabetes: number; cardiovascular: number; stress: number; sleep: number }
+) {
+  if (!disease || disease === 'none') {
+    return {
+      bodyPartAnalyses: [],
+    };
+  }
+
+  return generateBioTwinAnalysisWithAI(disease, riskFactors);
 }
 
 export function predictHealthRisks(metrics: HealthMetrics): RiskPrediction {

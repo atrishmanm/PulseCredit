@@ -44,6 +44,11 @@ service cloud.firestore {
       allow read, write: if request.auth.uid == userId;
     }
 
+    // User health metrics - persist manual changes
+    match /userMetrics/{userId} {
+      allow read, write: if request.auth.uid == userId;
+    }
+
     // Default: deny all
     match /{document=**} {
       allow read, write: if false;

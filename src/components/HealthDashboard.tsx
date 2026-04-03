@@ -1,10 +1,12 @@
 import { useHealth } from '../context/HealthContext';
 import { GlassCard } from './GlassCard';
-import { TrendingUp, TrendingDown, Activity, Moon, Apple, Brain, Heart, AlertCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, Moon, Apple, Brain, Heart, AlertCircle, Target } from 'lucide-react';
+import { getPersonalizedTargets } from '../lib/healthEngine';
 import { cn } from '../lib/utils';
 
 export function HealthDashboard() {
-  const { scoreBreakdown, scoreChanges, trendData } = useHealth();
+  const { scoreBreakdown, scoreChanges, trendData, user } = useHealth();
+  const targets = getPersonalizedTargets(user);
 
   const categories = [
     { key: 'sleep', name: 'Sleep', icon: Moon, color: 'text-purple-400', bgColor: 'bg-purple-400/10' },
@@ -111,6 +113,39 @@ export function HealthDashboard() {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Personalized Targets */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <Target className="w-5 h-5 text-secondary" />
+          <h3 className="font-headline text-xl font-bold">Your Targets</h3>
+          <span className="text-xs bg-secondary/20 text-secondary px-2 py-1 rounded-full font-bold">
+            {user.disease ? user.disease.charAt(0).toUpperCase() + user.disease.slice(1) : 'General Health'}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="bg-surface-container-high p-4 rounded-lg border border-surface-container-highest">
+            <p className="text-xs text-on-surface-variant mb-1">Daily Steps</p>
+            <p className="text-2xl font-black text-secondary">{targets.steps.toLocaleString()}</p>
+            <p className="text-xs text-on-surface-variant mt-1">steps/day</p>
+          </div>
+          <div className="bg-surface-container-high p-4 rounded-lg border border-surface-container-highest">
+            <p className="text-xs text-on-surface-variant mb-1">Sleep</p>
+            <p className="text-2xl font-black text-primary">{targets.sleep}h</p>
+            <p className="text-xs text-on-surface-variant mt-1">hours/night</p>
+          </div>
+          <div className="bg-surface-container-high p-4 rounded-lg border border-surface-container-highest">
+            <p className="text-xs text-on-surface-variant mb-1">Calories</p>
+            <p className="text-2xl font-black text-tertiary">{targets.calories.toLocaleString()}</p>
+            <p className="text-xs text-on-surface-variant mt-1">kcal/day</p>
+          </div>
+          <div className="bg-surface-container-high p-4 rounded-lg border border-surface-container-highest">
+            <p className="text-xs text-on-surface-variant mb-1">Exercise</p>
+            <p className="text-2xl font-black text-secondary">{targets.exercise}</p>
+            <p className="text-xs text-on-surface-variant mt-1">min/day</p>
+          </div>
         </div>
       </div>
 

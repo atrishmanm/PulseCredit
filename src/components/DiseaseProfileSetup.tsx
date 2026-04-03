@@ -51,7 +51,7 @@ export function DiseaseProfileSetup({ isOpen, onClose }: DiseaseProfileSetupProp
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Save to local health context
+      // Save to local health context first
       updateUser({
         disease: selectedDisease,
         bmi: bmi ? parseFloat(bmi) : undefined
@@ -60,9 +60,13 @@ export function DiseaseProfileSetup({ isOpen, onClose }: DiseaseProfileSetupProp
       // Also save to Firebase auth context
       await setUserDisease(selectedDisease);
 
+      console.log('Disease saved:', selectedDisease);
+
+      // Close modal
       onClose();
     } catch (error) {
       console.error('Error saving disease profile:', error);
+      alert('Failed to save profile. Please try again.');
     } finally {
       setSaving(false);
     }
