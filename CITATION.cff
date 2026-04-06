@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+title: "ViteCredit"
+message: "If you use this project, please cite it using the metadata below."
+authors:
+  - family-names: "Atrishman"
+    given-names: "Atrishman"
+    alias: "atrishmanm"
+license: "LicenseRef-ViteCredit-Attribution-1.0"
+version: "1.0.0"
+date-released: "2026-04-06"
+repository-code: "https://github.com/atrishmanm/ViteCredit"
+preferred-citation:
+  type: software
+  title: "ViteCredit"
+  authors:
+    - family-names: "Atrishman"
+      given-names: "Atrishman"
+      alias: "atrishmanm"
+  year: 2026
+  url: "https://github.com/atrishmanm/ViteCredit"

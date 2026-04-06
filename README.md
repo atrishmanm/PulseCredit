@@ -1,245 +1,58 @@
-# 🏥 Health Intelligence System
+# ViteCredit
 
-A personalized **Health Scoring Platform** that evaluates a user’s lifestyle using daily activities and long-term habits — inspired by research-based health indices and modern “credit score” systems.
+ViteCredit is a personalized health intelligence platform that combines daily behavior scoring, long-term lifetime scoring, AI-powered food analysis, and Firebase-backed sync to help users track and improve lifestyle health trends.
 
----
+## What It Includes
 
-# 🚀 Overview
+- Daily health scoring (activity, sleep, nutrition)
+- Lifetime score (1-1000) with gradual, credit-like updates
+- Disease-aware personalization (for example, diabetes and obesity profiles)
+- Food scanner with AI nutrition extraction and manual fallback
+- Dashboard views, trends, notifications, and profile-driven insights
+- Firebase Auth + Firestore data services + cloud-ready architecture
 
-This project generates **two types of health scores**:
+## Tech Stack
 
-### 📊 Daily Health Score
+- Frontend: React 19, Vite 6, TypeScript, Tailwind
+- Backend services: Firebase Functions + Express utilities
+- Data/Auth: Firestore + Firebase Authentication
+- AI integration: Gemini API utilities
 
-* Reflects **today’s lifestyle**
-* Based on:
+## Quick Start
 
-  * Steps walked
-  * Sleep duration
-  * Calories consumed/burned
-
-### 🧠 Lifetime Health Score (1–1000)
-
-* Inspired by a **credit score system**
-* Represents:
-
-  * Long-term habits
-  * Consistency
-  * Medical history
-  * Health trends
-
----
-
-# 🎯 Key Features
-
-## ✅ 1. Personalized Health Scoring
-
-* Adjusts scoring based on:
-
-  * Medical conditions (e.g., diabetes, obesity)
-  * User profile (age, weight, etc.)
-
-Example:
-
-* Healthy user → ~9000 steps target
-* Diabetes → ~7000 steps target
-* Obesity → ~11000+ steps target
-
----
-
-## 📈 2. Dual Score System
-
-### Daily Score
-
-* Range: **0–100 (internally) → scaled to 0–1000**
-* Changes every day
-
-### Lifetime Score
-
-* Range: **1–1000**
-* Stable and evolves slowly over time
-
----
-
-## 🔁 3. Score Inertia (Credit Score Logic)
-
-Lifetime score updates gradually:
-
-```
-New Score = 0.95 × Old Score + 0.05 × Daily Score
+```bash
+npm install
+npm run dev
 ```
 
-✔ Prevents sudden fluctuations
-✔ Reflects long-term behavior
+Windows helpers:
 
----
-
-## ⚙️ 4. Weighted Composite Model (Research-Based)
-
-Health score is calculated using a **weighted combination**:
-
-```
-Score = 
-    (W1 × Activity Score)
-  + (W2 × Sleep Score)
-  + (W3 × Nutrition Score)
+```bat
+start.bat
 ```
 
-Weights vary based on user condition:
+Mac/Linux helpers:
 
-| Condition | Activity | Sleep | Nutrition |
-| --------- | -------- | ----- | --------- |
-| Healthy   | 30%      | 30%   | 40%       |
-| Diabetes  | 25%      | 25%   | 50%       |
-| Obesity   | 40%      | 20%   | 40%       |
-
----
-
-## 🧩 5. Disease-Based Personalization
-
-The system dynamically adjusts:
-
-* Targets (e.g., step goals)
-* Weights (importance of factors)
-* Penalties (risk behaviors)
-
-Example:
-
-* Diabetes → high penalty for poor nutrition
-* Obesity → higher emphasis on activity
-
----
-
-## 📉 6. Trend & Consistency Tracking
-
-* Tracks user performance over time
-* Rewards improvement
-* Penalizes decline
-
----
-
-## 🔔 7. Smart Notifications
-
-Users receive alerts when:
-
-* Score improves significantly
-* Score drops
-* Milestones are reached
-
-Example:
-
-* “Great job! Your health score improved by +20 🎉”
-* “Your score dropped this week. Try improving sleep.”
-
----
-
-## 🧭 8. Separate Lifetime Dashboard
-
-* Accessible via navigation bar
-* Displays:
-
-  * Lifetime score
-  * Score history
-  * Trends
-  * Insights
-
----
-
-# 🏗️ Tech Stack
-
-### Frontend
-
-* React
-* Vite
-* HTML, CSS, JavaScript
-
-### Backend
-
-* Node.js
-
-### Database & Auth
-
-* Firebase
-
-### Mobile (Planned)
-
-* Expo (for integrating device health data)
-
----
-
-# 📊 Data Flow
-
-```
-User Input / Device Data
-        ↓
-Backend (Node.js)
-        ↓
-Score Calculation Engine
-        ↓
-Firebase Database
-        ↓
-Frontend Dashboard
+```bash
+./start.sh
 ```
 
----
+## Build And Validation
 
-# 🧠 Scoring Logic (Simplified)
-
-### Activity Score
-
-```
-steps / target_steps × 100
+```bash
+npm run build
+npm run lint
 ```
 
-### Sleep Score
+## Main Documentation
 
-```
-100 - deviation_from_ideal_sleep × penalty_factor
-```
+- Detailed project documentation: `PROJECT_DOCUMENTATION.md`
+- Architecture: `ARCHITECTURE.md`
+- Deployment: `DEPLOYMENT.md`
+- Firestore rules and schema: `FIRESTORE_RULES.md`, `FIRESTORE_SCHEMA.md`
+- Integration and implementation guides: `INTEGRATION_GUIDE.md`, `IMPLEMENTATION_GUIDE.md`
 
-### Nutrition Score
-
-```
-100 - calorie_deviation_percentage
-```
-
----
-
-# 🔄 Lifetime Score Update
-
-```
-Lifetime Score =
-    0.95 × Previous Score
-  + 0.05 × Current Daily Score
-```
-
----
-
-# 🔮 Future Enhancements
-
-* 📱 Automatic data tracking via mobile sensors
-* 📸 Food image → calorie estimation
-* 🤖 AI-based health insights
-* 📊 Weekly health reports
-* 🧬 Health risk prediction
-* 🏆 Gamification (streaks, badges)
-
----
-
-# 💡 Project Vision
-
-This project aims to go beyond simple fitness tracking and become a:
-
-> 🧠 **Health Intelligence System**
-
-By combining:
-
-* Research-based scoring
-* Personalized health adjustments
-* Long-term behavioral tracking
-
----
-
-# ⚠️ Disclaimer
+## Project Disclaimer
 
 This application is intended for **informational and lifestyle tracking purposes only** and should not be considered medical advice.
 
@@ -248,8 +61,8 @@ This application is intended for **informational and lifestyle tracking purposes
 # 👨‍💻 Contributors
 
 * Team name :- PulseCredit
-  - SupratikDey
   - atrishmanm
+  - SupratikDey
 
 ---
 
@@ -260,3 +73,23 @@ This system transforms raw health data into a **meaningful, personalized score**
 * Understand their lifestyle
 * Track long-term health
 * Make better decisions
+
+---
+
+## Citation And Attribution
+
+If you use this project publicly (code reuse, derivative work, demo, research, or publication), you must cite the original author.
+
+Required attribution:
+
+"Based on ViteCredit by atrishmanm (Atrishman)."
+
+Citation metadata is available in `CITATION.cff`.
+
+See `LICENSE` for licensing and attribution terms.
+
+## License
+
+Anyone can use this project, including for modification and redistribution, but citation is mandatory.
+
+See `LICENSE` for full terms and required attribution text.
