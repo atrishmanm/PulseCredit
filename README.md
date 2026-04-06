@@ -1,6 +1,6 @@
-# ViteCredit
+# PulseCredit
 
-ViteCredit is a personalized health intelligence platform that combines daily behavior scoring, long-term lifetime scoring, AI-powered food analysis, and Firebase-backed sync to help users track and improve lifestyle health trends.
+PulseCredit is a personalized health intelligence platform that combines daily behavior scoring, long-term lifetime scoring, AI-powered food analysis, and Firebase-backed sync to help users track and improve lifestyle health trends.
 
 ## What It Includes
 
